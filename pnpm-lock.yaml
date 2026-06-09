@@ -17,6 +17,9 @@ importers:
       '@eslint/js':
         specifier: ^9.39.4
         version: 9.39.4
+      '@types/node':
+        specifier: ^25.9.2
+        version: 25.9.2
       eslint:
         specifier: ^9.39.4
         version: 9.39.4(jiti@2.6.1)
@@ -79,7 +82,15 @@ importers:
         specifier: ^5
         version: 5.9.3
 
-  packages/config: {}
+  packages/config:
+    dependencies:
+      zod:
+        specifier: ^4.4.3
+        version: 4.4.3
+    devDependencies:
+      '@types/node':
+        specifier: ^20.19.42
+        version: 20.19.42
 
   packages/corsair: {}
 
