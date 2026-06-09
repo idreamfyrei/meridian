@@ -1,7 +1,12 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  /* config options here */
+  transpilePackages: [
+    "@meridian/config",
+    "@meridian/logger",
+    "@meridian/db",
+    "@meridian/corsair",
+  ],
 };
 
 export default nextConfig;

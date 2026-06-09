@@ -25,8 +25,18 @@ export const serverEnvSchema = z.object({
 
 export type ServerEnv = z.infer<typeof serverEnvSchema>;
 
+const optionalServerEnvSchema = serverEnvSchema.partial();
+
+export type OptionalServerEnv = z.infer<typeof optionalServerEnvSchema>;
+
 export function getServerEnv(
   source: NodeJS.ProcessEnv = process.env,
 ): ServerEnv {
   return serverEnvSchema.parse(source);
+}
+
+export function getOptionalServerEnv(
+  source: NodeJS.ProcessEnv = process.env,
+): OptionalServerEnv {
+  return optionalServerEnvSchema.parse(source);
 }
