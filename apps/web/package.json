@@ -12,6 +12,7 @@
     "test": "echo \"No tests yet for web\""
   },
   "dependencies": {
+    "@clerk/nextjs": "^7.4.3",
     "@meridian/config": "workspace:*",
     "@meridian/corsair": "workspace:*",
     "@meridian/db": "workspace:*",

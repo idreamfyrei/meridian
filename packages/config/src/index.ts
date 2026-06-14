@@ -6,8 +6,8 @@ const nodeEnvSchema = z
 
 export const serverEnvSchema = z.object({
   NODE_ENV: nodeEnvSchema,
-  APP_URL: z.string().url().default("http://localhost:3000"),
-  DATABASE_URL: z.string().url(),
+  APP_URL: z.string().default("http://localhost:3000"),
+  DATABASE_URL: z.string(),
 
   NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY: z.string().min(1).optional(),
   CLERK_SECRET_KEY: z.string().min(1).optional(),
