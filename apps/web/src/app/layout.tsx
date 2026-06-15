@@ -1,12 +1,7 @@
-import {
-  ClerkProvider,
-  Show,
-  SignInButton,
-  SignUpButton,
-  UserButton,
-} from "@clerk/nextjs";
+import { ClerkProvider } from "@clerk/nextjs";
 import type { Metadata } from "next";
 import Link from "next/link";
+import { AuthControls } from "./auth-controls";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -28,15 +23,11 @@ export default function RootLayout({
               Meridian
             </Link>
 
-            <nav className="flex items-center gap-3 text-sm">
-              <Show when="signed-out">
-                <SignInButton />
-                <SignUpButton />
-              </Show>
-
-              <Show when="signed-in">
-                <UserButton />
-              </Show>
+            <nav
+              aria-label="Account"
+              className="flex items-center gap-3 text-sm"
+            >
+              <AuthControls />
             </nav>
           </header>
 
