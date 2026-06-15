@@ -1,3 +1,5 @@
+import Link from "next/link";
+
 export default function Home() {
   return (
     <main className="flex flex-1 items-center justify-center bg-zinc-50 px-6">
@@ -12,6 +14,12 @@ export default function Home() {
           Meridian turns Gmail and Google Calendar signals into an action queue
           you can review, approve, and clear.
         </p>
+        <Link
+          href="/app"
+          className="mt-8 inline-flex h-10 items-center rounded-md bg-zinc-950 px-4 text-sm font-medium text-white hover:bg-zinc-800"
+        >
+          Open Meridian
+        </Link>
       </section>
     </main>
   );
