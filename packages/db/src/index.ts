@@ -1,5 +1,5 @@
 import { drizzle, type NodePgDatabase } from "drizzle-orm/node-postgres";
-import { Pool } from "pg";
+import { Pool, type PoolConfig } from "pg";
 
 export { ensureUserWorkspace } from "./workspaces";
 
@@ -10,10 +10,41 @@ export type MeridianDb = NodePgDatabase<typeof schema>;
 let pool: Pool | undefined;
 let db: MeridianDb | undefined;
 
+function getDatabaseUrl() {
+  const databaseUrl = process.env.DATABASE_URL;
+
+  if (!databaseUrl) {
+    throw new Error("DATABASE_URL is required.");
+  }
+
+  return databaseUrl;
+}
+
+function getPoolConnectionConfig(): PoolConfig {
+  const databaseUrl = getDatabaseUrl();
+
+  if (!databaseUrl.includes("supabase.com")) {
+    return {
+      connectionString: databaseUrl,
+    };
+  }
+
+  const url = new URL(databaseUrl);
+
+  return {
+    database: url.pathname.slice(1),
+    host: url.hostname,
+    password: decodeURIComponent(url.password),
+    port: Number(url.port),
+    ssl: {
+      rejectUnauthorized: false,
+    },
+    user: decodeURIComponent(url.username),
+  };
+}
+
 export function getPgPool(): Pool {
-  pool ??= new Pool({
-    connectionString: process.env.DATABASE_URL,
-  });
+  pool ??= new Pool(getPoolConnectionConfig());
 
   return pool;
 }

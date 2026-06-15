@@ -15,36 +15,35 @@ export async function ensureUserWorkspace(
 ) {
   const existingUser = await db.query.users.findFirst({
     where: eq(users.clerkUserId, input.clerkUserId),
-    with: {
-      workspaces: true,
-    },
   });
 
   if (existingUser) {
-    const workspace = existingUser.workspaces[0];
+    const existingWorkspace = await db.query.workspaces.findFirst({
+      where: eq(workspaces.userId, existingUser.id),
+    });
 
-    if (!workspace) {
-      const [createdWorkspace] = await db
-        .insert(workspaces)
-        .values({
-          userId: existingUser.id,
-          name: input.workspaceName ?? "My Workspace",
-        })
-        .returning();
-
-      if (!createdWorkspace) {
-        throw new Error("Failed to create workspace");
-      }
-
+    if (existingWorkspace) {
       return {
         user: existingUser,
-        workspace: createdWorkspace,
+        workspace: existingWorkspace,
       };
+    }
+
+    const [createdWorkspace] = await db
+      .insert(workspaces)
+      .values({
+        userId: existingUser.id,
+        name: input.workspaceName ?? "My Workspace",
+      })
+      .returning();
+
+    if (!createdWorkspace) {
+      throw new Error("Failed to create workspace");
     }
 
     return {
       user: existingUser,
-      workspace,
+      workspace: createdWorkspace,
     };
   }
 

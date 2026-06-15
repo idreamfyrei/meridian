@@ -15,11 +15,23 @@ if (!databaseUrl) {
   throw new Error("DATABASE_URL is required to run Drizzle commands.");
 }
 
+const dbUrl = new URL(databaseUrl);
+const dbCredentials = databaseUrl.includes("supabase.com")
+  ? {
+      database: dbUrl.pathname.slice(1),
+      host: dbUrl.hostname,
+      password: decodeURIComponent(dbUrl.password),
+      port: Number(dbUrl.port),
+      ssl: { rejectUnauthorized: false },
+      user: decodeURIComponent(dbUrl.username),
+    }
+  : {
+      url: databaseUrl,
+    };
+
 export default defineConfig({
   schema: "./src/schema.ts",
   out: "./drizzle",
   dialect: "postgresql",
-  dbCredentials: {
-    url: databaseUrl,
-  },
+  dbCredentials,
 });

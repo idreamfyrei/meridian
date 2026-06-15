@@ -11,6 +11,7 @@
     "lint": "eslint . --max-warnings=0",
     "lint:fix": "eslint . --fix",
     "typecheck": "tsc -p tsconfig.json --noEmit",
+    "db:check": "node scripts/check-connection.mjs ../../apps/web/.env.local",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "drizzle-kit migrate",
     "test": "echo \"No tests yet for @meridian/db\""
