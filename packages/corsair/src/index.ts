@@ -6,10 +6,35 @@ import { Pool } from "pg";
 let pool: Pool | undefined;
 let corsair: ReturnType<typeof createCorsair> | undefined;
 
+function getCorsairPoolConfig() {
+  const databaseUrl = process.env.DATABASE_URL;
+
+  if (!databaseUrl) {
+    throw new Error("DATABASE_URL is required.");
+  }
+
+  if (!databaseUrl.includes("supabase.com")) {
+    return {
+      connectionString: databaseUrl,
+    };
+  }
+
+  const url = new URL(databaseUrl);
+
+  return {
+    database: url.pathname.slice(1),
+    host: url.hostname,
+    password: decodeURIComponent(url.password),
+    port: Number(url.port),
+    ssl: {
+      rejectUnauthorized: false,
+    },
+    user: decodeURIComponent(url.username),
+  };
+}
+
 function getCorsairPool(): Pool {
-  pool ??= new Pool({
-    connectionString: process.env.DATABASE_URL,
-  });
+  pool ??= new Pool(getCorsairPoolConfig());
 
   return pool;
 }
