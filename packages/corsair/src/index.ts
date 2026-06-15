@@ -1,17 +1,23 @@
 import { gmail } from "@corsair-dev/gmail";
 import { googlecalendar } from "@corsair-dev/googlecalendar";
 import { createCorsair } from "corsair";
-import { Pool } from "pg";
+import { Pool, type PoolConfig } from "pg";
 
 let pool: Pool | undefined;
 let corsair: ReturnType<typeof createCorsair> | undefined;
 
-function getCorsairPoolConfig() {
+function getDatabaseUrl() {
   const databaseUrl = process.env.DATABASE_URL;
 
   if (!databaseUrl) {
     throw new Error("DATABASE_URL is required.");
   }
+
+  return databaseUrl;
+}
+
+function getCorsairPoolConfig(): PoolConfig {
+  const databaseUrl = getDatabaseUrl();
 
   if (!databaseUrl.includes("supabase.com")) {
     return {
