@@ -8,6 +8,13 @@
       "when": 1781511585765,
       "tag": "0000_handy_komodo",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1781563084075,
+      "tag": "0001_cold_outlaw_kid",
+      "breakpoints": true
     }
   ]
 }
