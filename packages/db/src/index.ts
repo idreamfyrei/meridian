@@ -1,6 +1,7 @@
 import { drizzle, type NodePgDatabase } from "drizzle-orm/node-postgres";
 import { Pool, type PoolConfig } from "pg";
 
+export { getIntegrationConnectionStatuses } from "./integration-accounts";
 export { ensureUserWorkspace } from "./workspaces";
 
 import * as schema from "./schema";
