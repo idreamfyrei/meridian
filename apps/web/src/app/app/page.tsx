@@ -6,6 +6,7 @@ import {
 
 import { SyncEmailButton } from "./sync-email-button";
 import { getCurrentWorkspace } from "@/lib/current-workspace";
+import { SyncCalendarButton } from "./sync-calendar-button";
 
 type CalendarEvent = {
   id: string;
@@ -130,9 +131,18 @@ export default async function AppPage() {
         </section>
 
         <section className="mt-8">
-          <h2 className="text-sm font-semibold text-zinc-950">
-            Upcoming calendar
-          </h2>
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+            <div>
+              <h2 className="text-sm font-semibold text-zinc-950">
+                Upcoming calendar
+              </h2>
+              <p className="mt-1 text-sm text-zinc-500">
+                Stored Google Calendar projections for this workspace.
+              </p>
+            </div>
+
+            <SyncCalendarButton />
+          </div>
 
           <div className="mt-3 overflow-hidden rounded-lg border border-zinc-200 bg-white shadow-sm">
             {agendaItems.length ? (
