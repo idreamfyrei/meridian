@@ -1,9 +1,6 @@
 import { drizzle, type NodePgDatabase } from "drizzle-orm/node-postgres";
 import { Pool, type PoolConfig } from "pg";
 
-export { getIntegrationConnectionStatuses } from "./integration-accounts";
-export { ensureUserWorkspace } from "./workspaces";
-
 import * as schema from "./schema";
 
 export type MeridianDb = NodePgDatabase<typeof schema>;
@@ -56,3 +53,8 @@ export function getDb(): MeridianDb {
 }
 
 export { schema };
+export {
+  getIntegrationConnectionStatuses,
+  upsertIntegrationAccount,
+} from "./integration-accounts";
+export { ensureUserWorkspace } from "./workspaces";

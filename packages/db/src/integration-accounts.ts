@@ -3,8 +3,10 @@ import { eq } from "drizzle-orm";
 import { integrationAccounts } from "./schema";
 import type { MeridianDb } from "./index";
 
+export type MeridianIntegrationProvider = "gmail" | "google_calendar";
+
 export type IntegrationConnectionStatus = {
-  provider: "gmail" | "google_calendar";
+  provider: MeridianIntegrationProvider;
   connected: boolean;
   displayName: string | null;
   externalAccountId: string | null;
@@ -30,4 +32,34 @@ export async function getIntegrationConnectionStatuses(
       externalAccountId: account?.externalAccountId ?? null,
     };
   });
+}
+
+export async function upsertIntegrationAccount(
+  db: MeridianDb,
+  input: {
+    workspaceId: string;
+    provider: MeridianIntegrationProvider;
+    displayName?: string | null;
+    externalAccountId?: string | null;
+  },
+) {
+  const now = new Date();
+
+  await db
+    .insert(integrationAccounts)
+    .values({
+      workspaceId: input.workspaceId,
+      provider: input.provider,
+      displayName: input.displayName ?? null,
+      externalAccountId: input.externalAccountId ?? null,
+      updatedAt: now,
+    })
+    .onConflictDoUpdate({
+      target: [integrationAccounts.workspaceId, integrationAccounts.provider],
+      set: {
+        displayName: input.displayName ?? null,
+        externalAccountId: input.externalAccountId ?? null,
+        updatedAt: now,
+      },
+    });
 }
