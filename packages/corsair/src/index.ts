@@ -123,3 +123,26 @@ export async function completeGoogleOAuthCallback({
     state,
   });
 }
+
+export async function listTenantCalendarEvents({
+  maxResults = 10,
+  timeMax,
+  timeMin,
+  workspaceId,
+}: {
+  maxResults?: number;
+  timeMax?: string;
+  timeMin?: string;
+  workspaceId: string;
+}) {
+  const tenantCorsair = getTenantCorsair(workspaceId);
+
+  return tenantCorsair.googlecalendar.api.events.getMany({
+    calendarId: "primary",
+    maxResults,
+    orderBy: "startTime",
+    singleEvents: true,
+    timeMax,
+    timeMin,
+  });
+}
