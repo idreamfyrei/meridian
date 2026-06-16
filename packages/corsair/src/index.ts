@@ -1,6 +1,6 @@
 import { gmail } from "@corsair-dev/gmail";
 import { googlecalendar } from "@corsair-dev/googlecalendar";
-import { createCorsair } from "corsair";
+import { createCorsair, setupCorsair } from "corsair";
 import { Pool, type PoolConfig } from "pg";
 
 let pool: Pool | undefined;
@@ -58,4 +58,10 @@ export function getCorsair() {
 
 export function getTenantCorsair(workspaceId: string) {
   return getCorsair().withTenant(workspaceId);
+}
+
+export async function ensureTenantCorsairSetup(workspaceId: string) {
+  return setupCorsair(getCorsair(), {
+    tenantId: workspaceId,
+  });
 }
