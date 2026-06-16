@@ -146,3 +146,19 @@ export async function listTenantCalendarEvents({
     timeMin,
   });
 }
+
+export async function listTenantInboxMessages({
+  maxResults = 10,
+  workspaceId,
+}: {
+  maxResults?: number;
+  workspaceId: string;
+}) {
+  const tenantCorsair = getTenantCorsair(workspaceId);
+
+  return tenantCorsair.gmail.api.messages.list({
+    labelIds: ["INBOX"],
+    maxResults,
+    q: "newer_than:30d",
+  });
+}
