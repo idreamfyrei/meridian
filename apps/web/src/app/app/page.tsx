@@ -1,6 +1,16 @@
+import { listTenantCalendarEvents } from "@meridian/corsair";
 import { getIntegrationConnectionStatuses } from "@meridian/db";
 
 import { getCurrentWorkspace } from "@/lib/current-workspace";
+
+type CalendarEvent = {
+  id?: string;
+  summary?: string;
+  start?: {
+    date?: string;
+    dateTime?: string;
+  };
+};
 
 function getProviderLabel(provider: "gmail" | "google_calendar") {
   if (provider === "gmail") {
@@ -8,6 +18,19 @@ function getProviderLabel(provider: "gmail" | "google_calendar") {
   }
 
   return "Google Calendar";
+}
+
+function getEventStartLabel(event: CalendarEvent) {
+  const value = event.start?.dateTime ?? event.start?.date;
+
+  if (!value) {
+    return "No start time";
+  }
+
+  return new Intl.DateTimeFormat("en", {
+    dateStyle: "medium",
+    timeStyle: event.start?.dateTime ? "short" : undefined,
+  }).format(new Date(value));
 }
 
 export default async function AppPage() {
@@ -23,6 +46,18 @@ export default async function AppPage() {
     db,
     workspace.id,
   );
+
+  const now = new Date();
+  const sevenDaysFromNow = new Date(now);
+  sevenDaysFromNow.setDate(now.getDate() + 7);
+
+  const agenda = await listTenantCalendarEvents({
+    workspaceId: workspace.id,
+    timeMin: now.toISOString(),
+    timeMax: sevenDaysFromNow.toISOString(),
+  });
+
+  const agendaItems: CalendarEvent[] = agenda.items ?? [];
 
   return (
     <main className="flex flex-1 bg-zinc-50 px-6 py-8">
@@ -77,6 +112,33 @@ export default async function AppPage() {
                 </div>
               </article>
             ))}
+          </div>
+        </section>
+
+        <section className="mt-8">
+          <h2 className="text-sm font-semibold text-zinc-950">
+            Upcoming calendar
+          </h2>
+
+          <div className="mt-3 overflow-hidden rounded-lg border border-zinc-200 bg-white shadow-sm">
+            {agendaItems.length ? (
+              <ul className="divide-y divide-zinc-100">
+                {agendaItems.slice(0, 5).map((event) => (
+                  <li key={event.id} className="px-4 py-3">
+                    <p className="text-sm font-medium text-zinc-950">
+                      {event.summary ?? "Untitled event"}
+                    </p>
+                    <p className="mt-1 text-sm text-zinc-500">
+                      {getEventStartLabel(event)}
+                    </p>
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <p className="px-4 py-3 text-sm text-zinc-500">
+                No upcoming events in the next 7 days.
+              </p>
+            )}
           </div>
         </section>
       </section>
