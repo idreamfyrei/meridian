@@ -162,3 +162,19 @@ export async function listTenantInboxMessages({
     q: "newer_than:30d",
   });
 }
+
+export async function getTenantGmailMessage({
+  messageId,
+  workspaceId,
+}: {
+  messageId: string;
+  workspaceId: string;
+}) {
+  const tenantCorsair = getTenantCorsair(workspaceId);
+
+  return tenantCorsair.gmail.api.messages.get({
+    format: "metadata",
+    id: messageId,
+    metadataHeaders: ["Subject", "From", "To", "Date"],
+  });
+}

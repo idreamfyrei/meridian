@@ -1,4 +1,7 @@
-import { listTenantInboxMessages } from "@meridian/corsair";
+import {
+  getTenantGmailMessage,
+  listTenantInboxMessages,
+} from "@meridian/corsair";
 import { getDb, upsertEmailProjection } from "@meridian/db";
 import { withRequestLogContext } from "@meridian/logger";
 
@@ -72,15 +75,20 @@ export async function POST() {
         continue;
       }
 
+      const messageDetail = await getTenantGmailMessage({
+        messageId: message.id,
+        workspaceId: currentWorkspace.workspace.id,
+      });
+
       await upsertEmailProjection(getDb(), {
         workspaceId: currentWorkspace.workspace.id,
-        externalMessageId: message.id,
-        externalThreadId: message.threadId,
-        subject: getHeader(message, "Subject") ?? null,
-        snippet: message.snippet ?? null,
-        from: getHeader(message, "From") ?? null,
-        to: getHeader(message, "To") ?? null,
-        receivedAt: getReceivedAt(message),
+        externalMessageId: messageDetail.id ?? message.id,
+        externalThreadId: messageDetail.threadId ?? message.threadId,
+        subject: getHeader(messageDetail, "Subject") ?? null,
+        snippet: messageDetail.snippet ?? null,
+        from: getHeader(messageDetail, "From") ?? null,
+        to: getHeader(messageDetail, "To") ?? null,
+        receivedAt: getReceivedAt(messageDetail),
       });
 
       syncedCount += 1;
