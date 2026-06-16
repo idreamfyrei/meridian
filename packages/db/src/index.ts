@@ -53,16 +53,33 @@ export function getDb(): MeridianDb {
 }
 
 export { schema };
+
 export {
   getIntegrationConnectionStatuses,
   upsertIntegrationAccount,
 } from "./integration-accounts";
+
 export { ensureUserWorkspace } from "./workspaces";
+
 export {
   listProjectedEmailThreads,
   upsertEmailProjection,
 } from "./email-projections";
+
 export {
   listProjectedCalendarEvents,
   upsertCalendarProjection,
 } from "./calendar-projections";
+
+export {
+  listOpenFollowUpItems,
+  updateFollowUpItemStatus,
+  upsertFollowUpItem,
+} from "./follow-up-items";
+
+export type {
+  FollowUpItemStatus,
+  FollowUpItemType,
+  UpdateFollowUpItemStatusInput,
+  UpsertFollowUpItemInput,
+} from "./follow-up-items";
