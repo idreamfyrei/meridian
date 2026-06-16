@@ -1,4 +1,7 @@
-import { ensureTenantCorsairSetup } from "@meridian/corsair";
+import {
+  ensureGoogleOAuthCredentials,
+  ensureTenantCorsairSetup,
+} from "@meridian/corsair";
 import { withRequestLogContext } from "@meridian/logger";
 
 import { getCurrentWorkspace } from "@/lib/current-workspace";
@@ -36,7 +39,13 @@ export async function POST() {
   );
 
   try {
-    const output = await ensureTenantCorsairSetup(workspace.id);
+    const setupOutput = await ensureTenantCorsairSetup(workspace.id);
+    await ensureGoogleOAuthCredentials();
+
+    const output = [
+      setupOutput,
+      "[meridian] Google OAuth client credentials configured.",
+    ].join("\n");
 
     logger.info(
       {
