@@ -151,6 +151,43 @@ export const emailMessages = pgTable(
   }),
 );
 
+export const calendarEvents = pgTable(
+  "calendar_events",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    workspaceId: uuid("workspace_id")
+      .notNull()
+      .references(() => workspaces.id, { onDelete: "cascade" }),
+    externalEventId: text("external_event_id").notNull(),
+    calendarId: text("calendar_id").notNull().default("primary"),
+    summary: text("summary"),
+    description: text("description"),
+    location: text("location"),
+    status: text("status"),
+    startsAt: timestamp("starts_at", { withTimezone: true }),
+    endsAt: timestamp("ends_at", { withTimezone: true }),
+    syncedAt: timestamp("synced_at", { withTimezone: true })
+      .defaultNow()
+      .notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .defaultNow()
+      .notNull(),
+    updatedAt: timestamp("updated_at", { withTimezone: true })
+      .defaultNow()
+      .notNull(),
+  },
+  (table) => ({
+    workspaceEventIdx: uniqueIndex("calendar_events_workspace_event_idx").on(
+      table.workspaceId,
+      table.externalEventId,
+    ),
+    workspaceStartsAtIdx: index("calendar_events_workspace_starts_at_idx").on(
+      table.workspaceId,
+      table.startsAt,
+    ),
+  }),
+);
+
 export const corsairIntegrations = pgTable(
   "corsair_integrations",
   {
