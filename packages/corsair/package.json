@@ -16,6 +16,7 @@
   "dependencies": {
     "@corsair-dev/gmail": "^0.1.4",
     "@corsair-dev/googlecalendar": "^0.1.3",
+    "@meridian/config": "workspace:*",
     "corsair": "^0.1.75",
     "pg": "^8.21.0"
   },
