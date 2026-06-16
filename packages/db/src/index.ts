@@ -62,3 +62,7 @@ export {
   listProjectedEmailThreads,
   upsertEmailProjection,
 } from "./email-projections";
+export {
+  listProjectedCalendarEvents,
+  upsertCalendarProjection,
+} from "./calendar-projections";
