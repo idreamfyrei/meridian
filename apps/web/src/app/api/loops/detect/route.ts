@@ -8,6 +8,39 @@ import { getCurrentWorkspace } from "@/lib/current-workspace";
 
 export const runtime = "nodejs";
 
+function isLikelyAutomatedSender(value: string) {
+  const normalized = value.toLowerCase();
+
+  return (
+    normalized.includes("no-reply") ||
+    normalized.includes("noreply") ||
+    normalized.includes("notification") ||
+    normalized.includes("newsletter") ||
+    normalized.includes("updates@") ||
+    normalized.includes("support@")
+  );
+}
+
+function isUsefulReplyCandidate(candidate: {
+  from: string | null;
+  snippet: string | null;
+  subject: string | null;
+}) {
+  if (!candidate.from || !candidate.snippet) {
+    return false;
+  }
+
+  if (isLikelyAutomatedSender(candidate.from)) {
+    return false;
+  }
+
+  if (candidate.subject?.toLowerCase().startsWith("fwd:")) {
+    return false;
+  }
+
+  return true;
+}
+
 export async function POST() {
   const requestId = crypto.randomUUID();
   const logger = withRequestLogContext(requestId, {
@@ -37,17 +70,17 @@ export async function POST() {
     let createdCount = 0;
 
     for (const candidate of candidates) {
-      if (!candidate.from || !candidate.snippet) {
+      if (!isUsefulReplyCandidate(candidate)) {
         continue;
       }
 
       await upsertFollowUpItem(currentWorkspace.db, {
         workspaceId: currentWorkspace.workspace.id,
         type: "reply_needed",
-        title: candidate.subject ?? "Reply needed",
-        reason: `Recent email from ${candidate.from}`,
-        suggestedAction: "Review the thread and draft a reply.",
-        confidence: 50,
+        title: candidate.subject ?? `Reply to ${candidate.from}`,
+        reason: `Recent message from ${candidate.from} looks like it may need a response.`,
+        suggestedAction: "Review the message and decide whether to reply.",
+        confidence: 60,
         sourceEmailThreadId: candidate.id,
         dueAt: candidate.lastMessageAt,
       });
