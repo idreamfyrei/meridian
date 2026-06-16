@@ -63,6 +63,7 @@ export { ensureUserWorkspace } from "./workspaces";
 
 export {
   listProjectedEmailThreads,
+  listReplyNeededEmailCandidates,
   upsertEmailProjection,
 } from "./email-projections";
 

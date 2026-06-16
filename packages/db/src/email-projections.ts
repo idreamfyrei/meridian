@@ -89,3 +89,15 @@ export async function listProjectedEmailThreads(
     limit,
   });
 }
+
+export async function listReplyNeededEmailCandidates(
+  db: MeridianDb,
+  workspaceId: string,
+  limit = 20,
+) {
+  return db.query.emailThreads.findMany({
+    where: eq(emailThreads.workspaceId, workspaceId),
+    orderBy: desc(emailThreads.lastMessageAt),
+    limit,
+  });
+}
