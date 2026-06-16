@@ -15,6 +15,7 @@ type GmailHeader = {
 };
 
 type GmailMessage = {
+  headers?: GmailHeader[];
   id?: string;
   threadId?: string;
   snippet?: string;
@@ -25,7 +26,9 @@ type GmailMessage = {
 };
 
 function getHeader(message: GmailMessage, name: string) {
-  return message.payload?.headers?.find(
+  const headers = message.payload?.headers ?? message.headers ?? [];
+
+  return headers.find(
     (header) => header.name?.toLowerCase() === name.toLowerCase(),
   )?.value;
 }
@@ -83,6 +86,7 @@ export async function POST() {
 
     const messages: GmailMessage[] = inbox.messages ?? [];
     let enrichedCount = 0;
+    let firstDetailShape: unknown = null;
     let missingMetadataCount = 0;
     let syncedCount = 0;
 
@@ -95,6 +99,24 @@ export async function POST() {
         messageId: message.id,
         workspaceId: currentWorkspace.workspace.id,
       });
+
+      if (!firstDetailShape) {
+        firstDetailShape = {
+          keys: Object.keys(messageDetail),
+          payloadKeys:
+            messageDetail.payload && typeof messageDetail.payload === "object"
+              ? Object.keys(messageDetail.payload)
+              : null,
+          headerSample:
+            (messageDetail.payload?.headers ?? messageDetail.headers)
+              ?.slice(0, 3)
+              .map((header: GmailHeader) => ({
+                hasValue: Boolean(header.value),
+                keys: Object.keys(header),
+                name: header.name,
+              })) ?? null,
+        };
+      }
 
       const subject = getHeader(messageDetail, "Subject") ?? null;
       const snippet = messageDetail.snippet ?? null;
@@ -125,6 +147,7 @@ export async function POST() {
     logger.info(
       {
         enrichedCount,
+        firstDetailShape,
         missingMetadataCount,
         syncedCount,
         workspaceId: currentWorkspace.workspace.id,
@@ -136,6 +159,7 @@ export async function POST() {
       ok: true,
       requestId,
       enrichedCount,
+      firstDetailShape,
       missingMetadataCount,
       syncedCount,
     });

@@ -173,8 +173,7 @@ export async function getTenantGmailMessage({
   const tenantCorsair = getTenantCorsair(workspaceId);
 
   return tenantCorsair.gmail.api.messages.get({
-    format: "metadata",
+    format: "full",
     id: messageId,
-    metadataHeaders: ["Subject", "From", "To", "Date"],
   });
 }
