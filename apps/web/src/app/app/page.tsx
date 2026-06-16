@@ -8,6 +8,7 @@ import {
 import { SyncEmailButton } from "./sync-email-button";
 import { getCurrentWorkspace } from "@/lib/current-workspace";
 import { SyncCalendarButton } from "./sync-calendar-button";
+import { DetectLoopsButton } from "./detect-loops-button";
 
 type CalendarEvent = {
   id: string;
@@ -110,7 +111,19 @@ export default async function AppPage() {
         </div>
 
         <section className="mt-8">
-          <h2 className="text-sm font-semibold text-zinc-950">Open loops</h2>
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+            <div>
+              <h2 className="text-sm font-semibold text-zinc-950">
+                Open loops
+              </h2>
+              <p className="mt-1 text-sm text-zinc-500">
+                Actionable follow-ups detected from your synced workspace
+                signals.
+              </p>
+            </div>
+
+            <DetectLoopsButton />
+          </div>
 
           <div className="mt-3 overflow-hidden rounded-lg border border-zinc-200 bg-white shadow-sm">
             {followUpItems.length ? (
