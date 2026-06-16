@@ -3,7 +3,7 @@ import { googlecalendar } from "@corsair-dev/googlecalendar";
 import { createCorsair, setupCorsair } from "corsair";
 import { Pool, type PoolConfig } from "pg";
 
-import { generateOAuthUrl } from "corsair/oauth";
+import { generateOAuthUrl, processOAuthCallback } from "corsair/oauth";
 
 import { getOptionalServerEnv } from "@meridian/config";
 
@@ -106,4 +106,20 @@ export async function getGoogleOAuthConnectUrl({
   });
 
   return result.url;
+}
+
+export async function completeGoogleOAuthCallback({
+  code,
+  redirectUri,
+  state,
+}: {
+  code: string;
+  redirectUri: string;
+  state: string;
+}) {
+  return processOAuthCallback(getCorsair(), {
+    code,
+    redirectUri,
+    state,
+  });
 }
