@@ -36,10 +36,24 @@ function getReceivedAt(message: GmailMessage) {
   }
 
   if (message.internalDate instanceof Date) {
-    return message.internalDate;
+    return Number.isNaN(message.internalDate.getTime())
+      ? null
+      : message.internalDate;
   }
 
-  return new Date(message.internalDate);
+  const value =
+    typeof message.internalDate === "string" &&
+    /^\d+$/.test(message.internalDate)
+      ? Number(message.internalDate)
+      : message.internalDate;
+
+  const receivedAt = new Date(value);
+
+  if (Number.isNaN(receivedAt.getTime())) {
+    return null;
+  }
+
+  return receivedAt;
 }
 
 export async function POST() {
