@@ -1,18 +1,17 @@
-import { listTenantCalendarEvents } from "@meridian/corsair";
 import {
   getIntegrationConnectionStatuses,
+  listProjectedCalendarEvents,
   listProjectedEmailThreads,
 } from "@meridian/db";
+
 import { SyncEmailButton } from "./sync-email-button";
 import { getCurrentWorkspace } from "@/lib/current-workspace";
 
 type CalendarEvent = {
-  id?: string;
-  summary?: string;
-  start?: {
-    date?: string;
-    dateTime?: string;
-  };
+  id: string;
+  summary: string | null;
+  location: string | null;
+  startsAt: Date | null;
 };
 
 type InboxThread = {
@@ -33,16 +32,14 @@ function getProviderLabel(provider: "gmail" | "google_calendar") {
 }
 
 function getEventStartLabel(event: CalendarEvent) {
-  const value = event.start?.dateTime ?? event.start?.date;
-
-  if (!value) {
+  if (!event.startsAt) {
     return "No start time";
   }
 
   return new Intl.DateTimeFormat("en", {
     dateStyle: "medium",
-    timeStyle: event.start?.dateTime ? "short" : undefined,
-  }).format(new Date(value));
+    timeStyle: "short",
+  }).format(event.startsAt);
 }
 
 export default async function AppPage() {
@@ -63,13 +60,12 @@ export default async function AppPage() {
   const sevenDaysFromNow = new Date(now);
   sevenDaysFromNow.setDate(now.getDate() + 7);
 
-  const agenda = await listTenantCalendarEvents({
+  const agendaItems: CalendarEvent[] = await listProjectedCalendarEvents(db, {
     workspaceId: workspace.id,
-    timeMin: now.toISOString(),
-    timeMax: sevenDaysFromNow.toISOString(),
+    timeMin: now,
+    timeMax: sevenDaysFromNow,
+    limit: 5,
   });
-
-  const agendaItems: CalendarEvent[] = agenda.items ?? [];
 
   const inboxThreads: InboxThread[] = await listProjectedEmailThreads(
     db,
@@ -141,7 +137,7 @@ export default async function AppPage() {
           <div className="mt-3 overflow-hidden rounded-lg border border-zinc-200 bg-white shadow-sm">
             {agendaItems.length ? (
               <ul className="divide-y divide-zinc-100">
-                {agendaItems.slice(0, 5).map((event) => (
+                {agendaItems.map((event) => (
                   <li key={event.id} className="px-4 py-3">
                     <p className="text-sm font-medium text-zinc-950">
                       {event.summary ?? "Untitled event"}
@@ -154,7 +150,7 @@ export default async function AppPage() {
               </ul>
             ) : (
               <p className="px-4 py-3 text-sm text-zinc-500">
-                No upcoming events in the next 7 days.
+                No synced upcoming events yet. Run the calendar sync endpoint.
               </p>
             )}
           </div>
