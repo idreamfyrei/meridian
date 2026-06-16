@@ -68,8 +68,32 @@ export async function POST() {
     );
 
     let createdCount = 0;
+    let forwardedSubjectCount = 0;
+    let missingSenderCount = 0;
+    let missingSnippetCount = 0;
+    let automatedSenderCount = 0;
 
     for (const candidate of candidates) {
+      if (!candidate.from) {
+        missingSenderCount += 1;
+        continue;
+      }
+
+      if (!candidate.snippet) {
+        missingSnippetCount += 1;
+        continue;
+      }
+
+      if (isLikelyAutomatedSender(candidate.from)) {
+        automatedSenderCount += 1;
+        continue;
+      }
+
+      if (candidate.subject?.toLowerCase().startsWith("fwd:")) {
+        forwardedSubjectCount += 1;
+        continue;
+      }
+
       if (!isUsefulReplyCandidate(candidate)) {
         continue;
       }
@@ -90,8 +114,12 @@ export async function POST() {
 
     logger.info(
       {
+        automatedSenderCount,
         candidateCount: candidates.length,
         createdCount,
+        forwardedSubjectCount,
+        missingSenderCount,
+        missingSnippetCount,
         workspaceId: currentWorkspace.workspace.id,
       },
       "loop detection completed",
@@ -100,8 +128,12 @@ export async function POST() {
     return Response.json({
       ok: true,
       requestId,
+      automatedSenderCount,
       candidateCount: candidates.length,
       createdCount,
+      forwardedSubjectCount,
+      missingSenderCount,
+      missingSnippetCount,
     });
   } catch (error) {
     logger.error(
