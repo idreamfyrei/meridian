@@ -1,0 +1,2 @@
+CREATE UNIQUE INDEX "follow_up_items_workspace_type_email_thread_idx" ON "follow_up_items" USING btree ("workspace_id","type","source_email_thread_id");--> statement-breakpoint
+CREATE UNIQUE INDEX "follow_up_items_workspace_type_calendar_event_idx" ON "follow_up_items" USING btree ("workspace_id","type","source_calendar_event_id");

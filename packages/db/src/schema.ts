@@ -247,6 +247,12 @@ export const followUpItems = pgTable(
     sourceCalendarEventIdx: index(
       "follow_up_items_source_calendar_event_idx",
     ).on(table.sourceCalendarEventId),
+    workspaceTypeEmailThreadIdx: uniqueIndex(
+      "follow_up_items_workspace_type_email_thread_idx",
+    ).on(table.workspaceId, table.type, table.sourceEmailThreadId),
+    workspaceTypeCalendarEventIdx: uniqueIndex(
+      "follow_up_items_workspace_type_calendar_event_idx",
+    ).on(table.workspaceId, table.type, table.sourceCalendarEventId),
   }),
 );
 
