@@ -1,9 +1,6 @@
-import { currentUser } from "@clerk/nextjs/server";
-import {
-  ensureUserWorkspace,
-  getDb,
-  getIntegrationConnectionStatuses,
-} from "@meridian/db";
+import { getIntegrationConnectionStatuses } from "@meridian/db";
+
+import { getCurrentWorkspace } from "@/lib/current-workspace";
 
 function getProviderLabel(provider: "gmail" | "google_calendar") {
   if (provider === "gmail") {
@@ -14,26 +11,13 @@ function getProviderLabel(provider: "gmail" | "google_calendar") {
 }
 
 export default async function AppPage() {
-  const user = await currentUser();
+  const currentWorkspace = await getCurrentWorkspace();
 
-  if (!user) {
+  if (!currentWorkspace) {
     return null;
   }
 
-  const db = getDb();
-
-  const primaryEmail =
-    user.emailAddresses.find((email) => email.id === user.primaryEmailAddressId)
-      ?.emailAddress ?? null;
-
-  const displayName =
-    user.firstName ?? primaryEmail?.split("@")[0] ?? "Meridian";
-
-  const { workspace } = await ensureUserWorkspace(db, {
-    clerkUserId: user.id,
-    email: primaryEmail,
-    workspaceName: `${displayName}'s Workspace`,
-  });
+  const { db, workspace } = currentWorkspace;
 
   const integrationStatuses = await getIntegrationConnectionStatuses(
     db,
