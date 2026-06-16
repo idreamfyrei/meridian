@@ -29,6 +29,13 @@
       "when": 1781634633211,
       "tag": "0003_free_sway",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1781637495215,
+      "tag": "0004_fat_puppet_master",
+      "breakpoints": true
     }
   ]
 }

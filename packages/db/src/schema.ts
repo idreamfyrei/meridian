@@ -7,12 +7,26 @@ import {
   timestamp,
   uniqueIndex,
   uuid,
+  integer,
   varchar,
 } from "drizzle-orm/pg-core";
 
 export const integrationProvider = pgEnum("integration_provider", [
   "gmail",
   "google_calendar",
+]);
+
+export const followUpType = pgEnum("follow_up_type", [
+  "reply_needed",
+  "scheduling_needed",
+  "post_meeting_follow_up",
+]);
+
+export const followUpStatus = pgEnum("follow_up_status", [
+  "open",
+  "snoozed",
+  "dismissed",
+  "handled",
 ]);
 
 export const users = pgTable(
@@ -185,6 +199,54 @@ export const calendarEvents = pgTable(
       table.workspaceId,
       table.startsAt,
     ),
+  }),
+);
+
+export const followUpItems = pgTable(
+  "follow_up_items",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    workspaceId: uuid("workspace_id")
+      .notNull()
+      .references(() => workspaces.id, { onDelete: "cascade" }),
+    type: followUpType("type").notNull(),
+    status: followUpStatus("status").notNull().default("open"),
+    title: varchar("title", { length: 240 }).notNull(),
+    reason: text("reason"),
+    suggestedAction: text("suggested_action"),
+    confidence: integer("confidence"),
+    sourceEmailThreadId: uuid("source_email_thread_id").references(
+      () => emailThreads.id,
+      { onDelete: "set null" },
+    ),
+    sourceCalendarEventId: uuid("source_calendar_event_id").references(
+      () => calendarEvents.id,
+      { onDelete: "set null" },
+    ),
+    dueAt: timestamp("due_at", { withTimezone: true }),
+    snoozedUntil: timestamp("snoozed_until", { withTimezone: true }),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .defaultNow()
+      .notNull(),
+    updatedAt: timestamp("updated_at", { withTimezone: true })
+      .defaultNow()
+      .notNull(),
+  },
+  (table) => ({
+    workspaceStatusIdx: index("follow_up_items_workspace_status_idx").on(
+      table.workspaceId,
+      table.status,
+    ),
+    workspaceDueAtIdx: index("follow_up_items_workspace_due_at_idx").on(
+      table.workspaceId,
+      table.dueAt,
+    ),
+    sourceEmailThreadIdx: index("follow_up_items_source_email_thread_idx").on(
+      table.sourceEmailThreadId,
+    ),
+    sourceCalendarEventIdx: index(
+      "follow_up_items_source_calendar_event_idx",
+    ).on(table.sourceCalendarEventId),
   }),
 );
 
