@@ -3,7 +3,11 @@ import { googlecalendar } from "@corsair-dev/googlecalendar";
 import { createCorsair, setupCorsair } from "corsair";
 import { Pool, type PoolConfig } from "pg";
 
+import { generateOAuthUrl } from "corsair/oauth";
+
 import { getOptionalServerEnv } from "@meridian/config";
+
+export type GoogleOAuthProvider = "gmail" | "googlecalendar";
 
 let pool: Pool | undefined;
 let corsair: ReturnType<typeof createCorsair> | undefined;
@@ -85,4 +89,21 @@ export async function ensureGoogleOAuthCredentials() {
     corsair.keys.googlecalendar.set_client_id(env.GOOGLE_CLIENT_ID),
     corsair.keys.googlecalendar.set_client_secret(env.GOOGLE_CLIENT_SECRET),
   ]);
+}
+
+export async function getGoogleOAuthConnectUrl({
+  provider,
+  redirectUri,
+  workspaceId,
+}: {
+  provider: GoogleOAuthProvider;
+  redirectUri: string;
+  workspaceId: string;
+}) {
+  const result = await generateOAuthUrl(getCorsair(), provider, {
+    tenantId: workspaceId,
+    redirectUri,
+  });
+
+  return result.url;
 }
