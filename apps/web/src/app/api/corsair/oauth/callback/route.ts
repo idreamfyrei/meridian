@@ -1,7 +1,20 @@
 import { completeGoogleOAuthCallback } from "@meridian/corsair";
+import { getDb, upsertIntegrationAccount } from "@meridian/db";
 import { withRequestLogContext } from "@meridian/logger";
 
 export const runtime = "nodejs";
+
+function toMeridianProvider(plugin: string) {
+  if (plugin === "gmail") {
+    return "gmail";
+  }
+
+  if (plugin === "googlecalendar") {
+    return "google_calendar";
+  }
+
+  return null;
+}
 
 export async function GET(request: Request) {
   const requestId = crypto.randomUUID();
@@ -42,6 +55,17 @@ export async function GET(request: Request) {
       redirectUri,
       state,
     });
+
+    const provider = toMeridianProvider(result.plugin);
+
+    if (provider) {
+      await upsertIntegrationAccount(getDb(), {
+        workspaceId: result.tenantId,
+        provider,
+        displayName: result.plugin,
+        externalAccountId: result.tenantId,
+      });
+    }
 
     logger.info(
       {
