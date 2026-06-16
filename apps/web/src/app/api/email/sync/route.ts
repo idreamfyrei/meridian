@@ -82,6 +82,8 @@ export async function POST() {
     });
 
     const messages: GmailMessage[] = inbox.messages ?? [];
+    let enrichedCount = 0;
+    let missingMetadataCount = 0;
     let syncedCount = 0;
 
     for (const message of messages) {
@@ -94,15 +96,27 @@ export async function POST() {
         workspaceId: currentWorkspace.workspace.id,
       });
 
+      const subject = getHeader(messageDetail, "Subject") ?? null;
+      const snippet = messageDetail.snippet ?? null;
+      const from = getHeader(messageDetail, "From") ?? null;
+      const to = getHeader(messageDetail, "To") ?? null;
+      const receivedAt = getReceivedAt(messageDetail);
+
+      if (subject || snippet || from) {
+        enrichedCount += 1;
+      } else {
+        missingMetadataCount += 1;
+      }
+
       await upsertEmailProjection(getDb(), {
         workspaceId: currentWorkspace.workspace.id,
         externalMessageId: messageDetail.id ?? message.id,
         externalThreadId: messageDetail.threadId ?? message.threadId,
-        subject: getHeader(messageDetail, "Subject") ?? null,
-        snippet: messageDetail.snippet ?? null,
-        from: getHeader(messageDetail, "From") ?? null,
-        to: getHeader(messageDetail, "To") ?? null,
-        receivedAt: getReceivedAt(messageDetail),
+        subject,
+        snippet,
+        from,
+        to,
+        receivedAt,
       });
 
       syncedCount += 1;
@@ -110,6 +124,8 @@ export async function POST() {
 
     logger.info(
       {
+        enrichedCount,
+        missingMetadataCount,
         syncedCount,
         workspaceId: currentWorkspace.workspace.id,
       },
@@ -119,6 +135,8 @@ export async function POST() {
     return Response.json({
       ok: true,
       requestId,
+      enrichedCount,
+      missingMetadataCount,
       syncedCount,
     });
   } catch (error) {
