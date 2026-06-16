@@ -1,5 +1,6 @@
 import {
   getIntegrationConnectionStatuses,
+  listOpenFollowUpItems,
   listProjectedCalendarEvents,
   listProjectedEmailThreads,
 } from "@meridian/db";
@@ -32,6 +33,20 @@ function getProviderLabel(provider: "gmail" | "google_calendar") {
   return "Google Calendar";
 }
 
+function getFollowUpTypeLabel(
+  type: "reply_needed" | "scheduling_needed" | "post_meeting_follow_up",
+) {
+  if (type === "reply_needed") {
+    return "Reply needed";
+  }
+
+  if (type === "scheduling_needed") {
+    return "Scheduling needed";
+  }
+
+  return "Post-meeting follow-up";
+}
+
 function getEventStartLabel(event: CalendarEvent) {
   if (!event.startsAt) {
     return "No start time";
@@ -56,6 +71,8 @@ export default async function AppPage() {
     db,
     workspace.id,
   );
+
+  const followUpItems = await listOpenFollowUpItems(db, workspace.id, 10);
 
   const now = new Date();
   const sevenDaysFromNow = new Date(now);
@@ -91,6 +108,42 @@ export default async function AppPage() {
             </p>
           </div>
         </div>
+
+        <section className="mt-8">
+          <h2 className="text-sm font-semibold text-zinc-950">Open loops</h2>
+
+          <div className="mt-3 overflow-hidden rounded-lg border border-zinc-200 bg-white shadow-sm">
+            {followUpItems.length ? (
+              <ul className="divide-y divide-zinc-100">
+                {followUpItems.map((item) => (
+                  <li key={item.id} className="px-4 py-3">
+                    <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+                      <div className="min-w-0">
+                        <p className="truncate text-sm font-medium text-zinc-950">
+                          {item.title}
+                        </p>
+                        <p className="mt-1 line-clamp-2 text-sm text-zinc-600">
+                          {item.reason ?? "No reason captured yet."}
+                        </p>
+                        <p className="mt-1 text-xs text-zinc-400">
+                          {item.suggestedAction ?? "Review this loop."}
+                        </p>
+                      </div>
+
+                      <span className="w-fit rounded-full bg-zinc-100 px-2.5 py-1 text-xs font-medium text-zinc-600">
+                        {getFollowUpTypeLabel(item.type)}
+                      </span>
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <p className="px-4 py-3 text-sm text-zinc-500">
+                No open loops yet. Sync Gmail, then run loop detection.
+              </p>
+            )}
+          </div>
+        </section>
 
         <section className="mt-8">
           <h2 className="text-sm font-semibold text-zinc-950">
