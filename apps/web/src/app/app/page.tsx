@@ -75,31 +75,6 @@ export default async function AppPage() {
 
   const inboxMessages: InboxMessage[] = inbox.messages ?? [];
 
-  <section className="mt-8">
-    <h2 className="text-sm font-semibold text-zinc-950">Recent inbox</h2>
-
-    <div className="mt-3 overflow-hidden rounded-lg border border-zinc-200 bg-white shadow-sm">
-      {inboxMessages.length ? (
-        <ul className="divide-y divide-zinc-100">
-          {inboxMessages.map((message) => (
-            <li key={message.id} className="px-4 py-3">
-              <p className="line-clamp-2 text-sm text-zinc-700">
-                {message.snippet ?? "No preview available"}
-              </p>
-              <p className="mt-1 text-xs text-zinc-400">
-                Thread {message.threadId ?? "unknown"}
-              </p>
-            </li>
-          ))}
-        </ul>
-      ) : (
-        <p className="px-4 py-3 text-sm text-zinc-500">
-          No recent inbox messages found.
-        </p>
-      )}
-    </div>
-  </section>;
-
   return (
     <main className="flex flex-1 bg-zinc-50 px-6 py-8">
       <section className="w-full max-w-5xl">
@@ -178,6 +153,31 @@ export default async function AppPage() {
             ) : (
               <p className="px-4 py-3 text-sm text-zinc-500">
                 No upcoming events in the next 7 days.
+              </p>
+            )}
+          </div>
+        </section>
+
+        <section className="mt-8">
+          <h2 className="text-sm font-semibold text-zinc-950">Recent inbox</h2>
+
+          <div className="mt-3 overflow-hidden rounded-lg border border-zinc-200 bg-white shadow-sm">
+            {inboxMessages.length ? (
+              <ul className="divide-y divide-zinc-100">
+                {inboxMessages.map((message) => (
+                  <li key={message.id} className="px-4 py-3">
+                    <p className="line-clamp-2 text-sm text-zinc-700">
+                      {message.snippet ?? "No preview available"}
+                    </p>
+                    <p className="mt-1 text-xs text-zinc-400">
+                      Thread {message.threadId ?? "unknown"}
+                    </p>
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <p className="px-4 py-3 text-sm text-zinc-500">
+                No recent inbox messages found.
               </p>
             )}
           </div>
