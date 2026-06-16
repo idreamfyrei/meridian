@@ -79,6 +79,78 @@ export const integrationAccounts = pgTable(
   }),
 );
 
+export const emailThreads = pgTable(
+  "email_threads",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    workspaceId: uuid("workspace_id")
+      .notNull()
+      .references(() => workspaces.id, { onDelete: "cascade" }),
+    externalThreadId: text("external_thread_id").notNull(),
+    subject: text("subject"),
+    snippet: text("snippet"),
+    from: text("from_address"),
+    lastMessageAt: timestamp("last_message_at", { withTimezone: true }),
+    syncedAt: timestamp("synced_at", { withTimezone: true })
+      .defaultNow()
+      .notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .defaultNow()
+      .notNull(),
+    updatedAt: timestamp("updated_at", { withTimezone: true })
+      .defaultNow()
+      .notNull(),
+  },
+  (table) => ({
+    workspaceThreadIdx: uniqueIndex("email_threads_workspace_thread_idx").on(
+      table.workspaceId,
+      table.externalThreadId,
+    ),
+    workspaceLastMessageIdx: index(
+      "email_threads_workspace_last_message_idx",
+    ).on(table.workspaceId, table.lastMessageAt),
+  }),
+);
+
+export const emailMessages = pgTable(
+  "email_messages",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    workspaceId: uuid("workspace_id")
+      .notNull()
+      .references(() => workspaces.id, { onDelete: "cascade" }),
+    threadId: uuid("thread_id")
+      .notNull()
+      .references(() => emailThreads.id, { onDelete: "cascade" }),
+    externalMessageId: text("external_message_id").notNull(),
+    externalThreadId: text("external_thread_id").notNull(),
+    subject: text("subject"),
+    snippet: text("snippet"),
+    from: text("from_address"),
+    to: text("to_address"),
+    receivedAt: timestamp("received_at", { withTimezone: true }),
+    syncedAt: timestamp("synced_at", { withTimezone: true })
+      .defaultNow()
+      .notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .defaultNow()
+      .notNull(),
+    updatedAt: timestamp("updated_at", { withTimezone: true })
+      .defaultNow()
+      .notNull(),
+  },
+  (table) => ({
+    workspaceMessageIdx: uniqueIndex("email_messages_workspace_message_idx").on(
+      table.workspaceId,
+      table.externalMessageId,
+    ),
+    threadReceivedIdx: index("email_messages_thread_received_idx").on(
+      table.threadId,
+      table.receivedAt,
+    ),
+  }),
+);
+
 export const corsairIntegrations = pgTable(
   "corsair_integrations",
   {
