@@ -1,8 +1,8 @@
+import { listTenantCalendarEvents } from "@meridian/corsair";
 import {
-  listTenantCalendarEvents,
-  listTenantInboxMessages,
-} from "@meridian/corsair";
-import { getIntegrationConnectionStatuses } from "@meridian/db";
+  getIntegrationConnectionStatuses,
+  listProjectedEmailThreads,
+} from "@meridian/db";
 
 import { getCurrentWorkspace } from "@/lib/current-workspace";
 
@@ -15,10 +15,13 @@ type CalendarEvent = {
   };
 };
 
-type InboxMessage = {
-  id?: string;
-  snippet?: string;
-  threadId?: string;
+type InboxThread = {
+  id: string;
+  externalThreadId: string;
+  subject: string | null;
+  snippet: string | null;
+  from: string | null;
+  lastMessageAt: Date | null;
 };
 
 function getProviderLabel(provider: "gmail" | "google_calendar") {
@@ -68,12 +71,11 @@ export default async function AppPage() {
 
   const agendaItems: CalendarEvent[] = agenda.items ?? [];
 
-  const inbox = await listTenantInboxMessages({
-    workspaceId: workspace.id,
-    maxResults: 5,
-  });
-
-  const inboxMessages: InboxMessage[] = inbox.messages ?? [];
+  const inboxThreads: InboxThread[] = await listProjectedEmailThreads(
+    db,
+    workspace.id,
+    5,
+  );
 
   return (
     <main className="flex flex-1 bg-zinc-50 px-6 py-8">
@@ -162,22 +164,25 @@ export default async function AppPage() {
           <h2 className="text-sm font-semibold text-zinc-950">Recent inbox</h2>
 
           <div className="mt-3 overflow-hidden rounded-lg border border-zinc-200 bg-white shadow-sm">
-            {inboxMessages.length ? (
+            {inboxThreads.length ? (
               <ul className="divide-y divide-zinc-100">
-                {inboxMessages.map((message) => (
-                  <li key={message.id} className="px-4 py-3">
-                    <p className="line-clamp-2 text-sm text-zinc-700">
-                      {message.snippet ?? "No preview available"}
+                {inboxThreads.map((thread) => (
+                  <li key={thread.id} className="px-4 py-3">
+                    <p className="truncate text-sm font-medium text-zinc-950">
+                      {thread.subject ?? "No subject"}
                     </p>
-                    <p className="mt-1 text-xs text-zinc-400">
-                      Thread {message.threadId ?? "unknown"}
+                    <p className="mt-1 line-clamp-2 text-sm text-zinc-700">
+                      {thread.snippet ?? "No preview available"}
+                    </p>
+                    <p className="mt-1 truncate text-xs text-zinc-400">
+                      {thread.from ?? "Unknown sender"}
                     </p>
                   </li>
                 ))}
               </ul>
             ) : (
               <p className="px-4 py-3 text-sm text-zinc-500">
-                No recent inbox messages found.
+                No synced inbox messages yet. Run the Gmail sync endpoint.
               </p>
             )}
           </div>
