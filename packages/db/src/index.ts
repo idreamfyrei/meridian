@@ -58,3 +58,7 @@ export {
   upsertIntegrationAccount,
 } from "./integration-accounts";
 export { ensureUserWorkspace } from "./workspaces";
+export {
+  listProjectedEmailThreads,
+  upsertEmailProjection,
+} from "./email-projections";
