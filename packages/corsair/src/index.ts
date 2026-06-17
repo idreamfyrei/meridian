@@ -159,7 +159,7 @@ export async function listTenantInboxMessages({
   return tenantCorsair.gmail.api.messages.list({
     labelIds: ["INBOX"],
     maxResults,
-    q: "newer_than:30d",
+    q: "newer_than:30d -category:promotions -category:social -category:forums -in:spam -in:trash",
   });
 }
 
