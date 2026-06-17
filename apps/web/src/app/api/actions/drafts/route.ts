@@ -1,6 +1,7 @@
 import {
   createActionDraft,
   getFollowUpItem,
+  getProjectedEmailThread,
   type ActionDraftKind,
 } from "@meridian/db";
 import { withRequestLogContext } from "@meridian/logger";
@@ -100,11 +101,22 @@ export async function POST(request: Request) {
     }
 
     const draftCopy = getDraftCopy(item);
+    let recipient: string | null = null;
+
+    if (item.sourceEmailThreadId) {
+      const thread = await getProjectedEmailThread(currentWorkspace.db, {
+        workspaceId: currentWorkspace.workspace.id,
+        id: item.sourceEmailThreadId,
+      });
+
+      recipient = thread?.from ?? null;
+    }
 
     const draft = await createActionDraft(currentWorkspace.db, {
       workspaceId: currentWorkspace.workspace.id,
       followUpItemId: item.id,
       kind: getDraftKind(item.type),
+      recipient,
       subject: draftCopy.subject,
       body: draftCopy.body,
       payload: {

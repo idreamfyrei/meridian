@@ -62,6 +62,7 @@ export {
 export { ensureUserWorkspace } from "./workspaces";
 
 export {
+  getProjectedEmailThread,
   listProjectedEmailThreads,
   listReplyNeededEmailCandidates,
   upsertEmailProjection,

@@ -186,6 +186,11 @@ export default async function AppPage() {
                         <p className="truncate text-sm font-medium text-zinc-950">
                           {draft.subject ?? "Untitled draft"}
                         </p>
+                        <p className="mt-1 truncate text-xs text-zinc-400">
+                          {draft.recipient
+                            ? `To: ${draft.recipient}`
+                            : "No recipient yet"}
+                        </p>
                         <p className="mt-1 line-clamp-2 whitespace-pre-line text-sm text-zinc-600">
                           {draft.body ?? "No draft body yet."}
                         </p>

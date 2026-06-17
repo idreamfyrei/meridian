@@ -125,6 +125,21 @@ export async function listProjectedEmailThreads(
   });
 }
 
+export async function getProjectedEmailThread(
+  db: MeridianDb,
+  input: {
+    workspaceId: string;
+    id: string;
+  },
+) {
+  return db.query.emailThreads.findFirst({
+    where: and(
+      eq(emailThreads.workspaceId, input.workspaceId),
+      eq(emailThreads.id, input.id),
+    ),
+  });
+}
+
 export async function listReplyNeededEmailCandidates(
   db: MeridianDb,
   workspaceId: string,
