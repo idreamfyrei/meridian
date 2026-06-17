@@ -1,4 +1,4 @@
-import { and, asc, eq, gte, lte } from "drizzle-orm";
+import { and, asc, desc, eq, gte, lte } from "drizzle-orm";
 
 import type { MeridianDb } from "./index";
 import { calendarEvents } from "./schema";
@@ -69,5 +69,25 @@ export async function listProjectedCalendarEvents(
     ),
     orderBy: asc(calendarEvents.startsAt),
     limit: input.limit ?? 10,
+  });
+}
+
+export async function listPostMeetingFollowUpCandidates(
+  db: MeridianDb,
+  input: {
+    workspaceId: string;
+    timeMin: Date;
+    timeMax: Date;
+    limit?: number;
+  },
+) {
+  return db.query.calendarEvents.findMany({
+    where: and(
+      eq(calendarEvents.workspaceId, input.workspaceId),
+      gte(calendarEvents.endsAt, input.timeMin),
+      lte(calendarEvents.endsAt, input.timeMax),
+    ),
+    orderBy: desc(calendarEvents.endsAt),
+    limit: input.limit ?? 20,
   });
 }

@@ -68,6 +68,7 @@ export {
 } from "./email-projections";
 
 export {
+  listPostMeetingFollowUpCandidates,
   listProjectedCalendarEvents,
   upsertCalendarProjection,
 } from "./calendar-projections";

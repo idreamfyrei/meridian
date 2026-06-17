@@ -1,4 +1,5 @@
 import {
+  listPostMeetingFollowUpCandidates,
   listReplyNeededEmailCandidates,
   upsertFollowUpItem,
 } from "@meridian/db";
@@ -61,19 +62,22 @@ export async function POST() {
   }
 
   try {
-    const candidates = await listReplyNeededEmailCandidates(
+    const replyCandidates = await listReplyNeededEmailCandidates(
       currentWorkspace.db,
       currentWorkspace.workspace.id,
       20,
     );
 
     let createdCount = 0;
+    let postMeetingCandidateCount = 0;
+    let postMeetingCreatedCount = 0;
+    let replyCreatedCount = 0;
     let forwardedSubjectCount = 0;
     let missingSenderCount = 0;
     let missingSnippetCount = 0;
     let automatedSenderCount = 0;
 
-    for (const candidate of candidates) {
+    for (const candidate of replyCandidates) {
       if (!candidate.from) {
         missingSenderCount += 1;
         continue;
@@ -110,16 +114,52 @@ export async function POST() {
       });
 
       createdCount += 1;
+      replyCreatedCount += 1;
+    }
+
+    const now = new Date();
+    const threeDaysAgo = new Date(now);
+    threeDaysAgo.setDate(now.getDate() - 3);
+
+    const postMeetingCandidates = await listPostMeetingFollowUpCandidates(
+      currentWorkspace.db,
+      {
+        workspaceId: currentWorkspace.workspace.id,
+        timeMin: threeDaysAgo,
+        timeMax: now,
+        limit: 20,
+      },
+    );
+
+    postMeetingCandidateCount = postMeetingCandidates.length;
+
+    for (const candidate of postMeetingCandidates) {
+      await upsertFollowUpItem(currentWorkspace.db, {
+        workspaceId: currentWorkspace.workspace.id,
+        type: "post_meeting_follow_up",
+        title: `Follow up: ${candidate.summary ?? "Recent meeting"}`,
+        reason: "Recent calendar event may need a follow-up.",
+        suggestedAction: "Send a short recap or next-steps note.",
+        confidence: 50,
+        sourceCalendarEventId: candidate.id,
+        dueAt: candidate.endsAt,
+      });
+
+      createdCount += 1;
+      postMeetingCreatedCount += 1;
     }
 
     logger.info(
       {
         automatedSenderCount,
-        candidateCount: candidates.length,
+        candidateCount: replyCandidates.length,
         createdCount,
         forwardedSubjectCount,
         missingSenderCount,
         missingSnippetCount,
+        postMeetingCandidateCount,
+        postMeetingCreatedCount,
+        replyCreatedCount,
         workspaceId: currentWorkspace.workspace.id,
       },
       "loop detection completed",
@@ -129,11 +169,14 @@ export async function POST() {
       ok: true,
       requestId,
       automatedSenderCount,
-      candidateCount: candidates.length,
+      candidateCount: replyCandidates.length,
       createdCount,
       forwardedSubjectCount,
       missingSenderCount,
       missingSnippetCount,
+      postMeetingCandidateCount,
+      postMeetingCreatedCount,
+      replyCreatedCount,
     });
   } catch (error) {
     logger.error(

@@ -51,13 +51,16 @@ export async function POST() {
   }
 
   const now = new Date();
+  const sevenDaysAgo = new Date(now);
+  sevenDaysAgo.setDate(now.getDate() - 7);
+
   const thirtyDaysFromNow = new Date(now);
   thirtyDaysFromNow.setDate(now.getDate() + 30);
 
   try {
     const agenda = await listTenantCalendarEvents({
       workspaceId: currentWorkspace.workspace.id,
-      timeMin: now.toISOString(),
+      timeMin: sevenDaysAgo.toISOString(),
       timeMax: thirtyDaysFromNow.toISOString(),
       maxResults: 50,
     });
