@@ -10,6 +10,7 @@ import { getCurrentWorkspace } from "@/lib/current-workspace";
 import { SyncCalendarButton } from "./sync-calendar-button";
 import { DetectLoopsButton } from "./detect-loops-button";
 import { FollowUpActions } from "./follow-up-actions";
+import { RefreshWorkspaceButton } from "./refresh-workspace-button";
 
 type CalendarEvent = {
   id: string;
@@ -109,6 +110,8 @@ export default async function AppPage() {
               Calendar.
             </p>
           </div>
+
+          <RefreshWorkspaceButton />
         </div>
 
         <section className="mt-8">
