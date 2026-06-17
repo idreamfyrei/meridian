@@ -54,6 +54,20 @@ export async function createActionDraft(
   return draft;
 }
 
+export async function listActionDrafts(
+  db: MeridianDb,
+  input: {
+    workspaceId: string;
+    limit?: number;
+  },
+) {
+  return db.query.actionDrafts.findMany({
+    where: eq(actionDrafts.workspaceId, input.workspaceId),
+    orderBy: desc(actionDrafts.createdAt),
+    limit: input.limit ?? 10,
+  });
+}
+
 export async function listActionDraftsForFollowUp(
   db: MeridianDb,
   input: {

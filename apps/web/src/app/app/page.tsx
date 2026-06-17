@@ -1,5 +1,6 @@
 import {
   getIntegrationConnectionStatuses,
+  listActionDrafts,
   listOpenFollowUpItems,
   listProjectedCalendarEvents,
   listProjectedEmailThreads,
@@ -73,6 +74,10 @@ export default async function AppPage() {
   );
 
   const followUpItems = await listOpenFollowUpItems(db, workspace.id, 10);
+  const actionDrafts = await listActionDrafts(db, {
+    workspaceId: workspace.id,
+    limit: 5,
+  });
 
   const now = new Date();
   const sevenDaysFromNow = new Date(now);
@@ -157,6 +162,44 @@ export default async function AppPage() {
               <p className="px-4 py-3 text-sm text-zinc-500">
                 No open loops yet. Refresh your workspace to check for new
                 follow-ups.
+              </p>
+            )}
+          </div>
+        </section>
+
+        <section className="mt-8">
+          <div>
+            <h2 className="text-sm font-semibold text-zinc-950">Drafts</h2>
+            <p className="mt-1 text-sm text-zinc-500">
+              Proposed actions waiting for review before anything is sent.
+            </p>
+          </div>
+
+          <div className="mt-3 overflow-hidden rounded-lg border border-zinc-200 bg-white shadow-sm">
+            {actionDrafts.length ? (
+              <ul className="divide-y divide-zinc-100">
+                {actionDrafts.map((draft) => (
+                  <li key={draft.id} className="px-4 py-3">
+                    <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                      <div className="min-w-0">
+                        <p className="truncate text-sm font-medium text-zinc-950">
+                          {draft.subject ?? "Untitled draft"}
+                        </p>
+                        <p className="mt-1 line-clamp-2 whitespace-pre-line text-sm text-zinc-600">
+                          {draft.body ?? "No draft body yet."}
+                        </p>
+                      </div>
+
+                      <span className="w-fit rounded-full bg-amber-50 px-2.5 py-1 text-xs font-medium text-amber-700">
+                        {draft.status}
+                      </span>
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <p className="px-4 py-3 text-sm text-zinc-500">
+                No drafts yet. Create one from an open loop.
               </p>
             )}
           </div>
