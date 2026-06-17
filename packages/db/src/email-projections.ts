@@ -3,6 +3,41 @@ import { and, desc, eq, notIlike } from "drizzle-orm";
 import { emailMessages, emailThreads } from "./schema";
 import type { MeridianDb } from "./index";
 
+const NOISY_SENDER_PATTERNS = [
+  "%pinterest%",
+  "%linkedin%",
+  "%facebook%",
+  "%instagram%",
+  "%tiktok%",
+  "%twitter%",
+  "%x.com%",
+  "%youtube%",
+  "%reddit%",
+  "%quora%",
+  "%medium%",
+  "%substack%",
+  "%mailchimp%",
+  "%newsletter%",
+  "%marketing%",
+  "%promo%",
+  "%promotions%",
+  "%offers%",
+  "%deals%",
+];
+
+const NOISY_SUBJECT_PATTERNS = [
+  "%newsletter%",
+  "%digest%",
+  "%weekly update%",
+  "%sale%",
+  "%discount%",
+  "%limited time%",
+  "%recommended for you%",
+  "%people viewed your profile%",
+  "%new notification%",
+  "%connection request%",
+];
+
 export type EmailProjectionInput = {
   workspaceId: string;
   externalMessageId: string;
@@ -105,7 +140,11 @@ export async function listReplyNeededEmailCandidates(
 function getUsefulEmailThreadWhere(workspaceId: string) {
   return and(
     eq(emailThreads.workspaceId, workspaceId),
-    notIlike(emailThreads.from, "%pinterest%"),
-    notIlike(emailThreads.from, "%linkedin%"),
+    ...NOISY_SENDER_PATTERNS.map((pattern) =>
+      notIlike(emailThreads.from, pattern),
+    ),
+    ...NOISY_SUBJECT_PATTERNS.map((pattern) =>
+      notIlike(emailThreads.subject, pattern),
+    ),
   );
 }
