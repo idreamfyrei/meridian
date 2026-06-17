@@ -74,6 +74,7 @@ export {
 } from "./calendar-projections";
 
 export {
+  getFollowUpItem,
   listOpenFollowUpItems,
   updateFollowUpItemStatus,
   upsertFollowUpItem,

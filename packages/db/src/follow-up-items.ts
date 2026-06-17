@@ -144,6 +144,21 @@ function getVisibleFollowUpWhere(workspaceId: string, now: Date) {
   );
 }
 
+export async function getFollowUpItem(
+  db: MeridianDb,
+  input: {
+    workspaceId: string;
+    id: string;
+  },
+) {
+  return db.query.followUpItems.findFirst({
+    where: and(
+      eq(followUpItems.id, input.id),
+      eq(followUpItems.workspaceId, input.workspaceId),
+    ),
+  });
+}
+
 export async function updateFollowUpItemStatus(
   db: MeridianDb,
   input: UpdateFollowUpItemStatusInput,
