@@ -1,4 +1,4 @@
-import { desc, eq } from "drizzle-orm";
+import { and, desc, eq, notIlike } from "drizzle-orm";
 
 import { emailMessages, emailThreads } from "./schema";
 import type { MeridianDb } from "./index";
@@ -84,7 +84,7 @@ export async function listProjectedEmailThreads(
   limit = 10,
 ) {
   return db.query.emailThreads.findMany({
-    where: eq(emailThreads.workspaceId, workspaceId),
+    where: getUsefulEmailThreadWhere(workspaceId),
     orderBy: desc(emailThreads.lastMessageAt),
     limit,
   });
@@ -96,8 +96,16 @@ export async function listReplyNeededEmailCandidates(
   limit = 20,
 ) {
   return db.query.emailThreads.findMany({
-    where: eq(emailThreads.workspaceId, workspaceId),
+    where: getUsefulEmailThreadWhere(workspaceId),
     orderBy: desc(emailThreads.lastMessageAt),
     limit,
   });
+}
+
+function getUsefulEmailThreadWhere(workspaceId: string) {
+  return and(
+    eq(emailThreads.workspaceId, workspaceId),
+    notIlike(emailThreads.from, "%pinterest%"),
+    notIlike(emailThreads.from, "%linkedin%"),
+  );
 }

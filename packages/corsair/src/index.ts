@@ -9,6 +9,28 @@ import { getOptionalServerEnv } from "@meridian/config";
 
 export type GoogleOAuthProvider = "gmail" | "googlecalendar";
 
+const GMAIL_INBOX_QUERY = [
+  "newer_than:30d",
+  "-category:promotions",
+  "-category:social",
+  "-category:forums",
+  "-in:spam",
+  "-in:trash",
+  "-from:pinterest",
+  "-from:linkedin",
+  "-from:facebook",
+  "-from:instagram",
+  "-from:tiktok",
+  "-from:twitter",
+  "-from:x.com",
+  "-from:youtube",
+  "-from:reddit",
+  "-from:quora",
+  "-from:medium",
+  "-from:substack",
+  "-from:mailchimp",
+].join(" ");
+
 let pool: Pool | undefined;
 let corsair: ReturnType<typeof createCorsair> | undefined;
 
@@ -159,7 +181,7 @@ export async function listTenantInboxMessages({
   return tenantCorsair.gmail.api.messages.list({
     labelIds: ["INBOX"],
     maxResults,
-    q: "newer_than:30d -category:promotions -category:social -category:forums -in:spam -in:trash",
+    q: GMAIL_INBOX_QUERY,
   });
 }
 
