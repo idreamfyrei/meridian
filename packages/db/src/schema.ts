@@ -29,6 +29,19 @@ export const followUpStatus = pgEnum("follow_up_status", [
   "handled",
 ]);
 
+export const actionDraftKind = pgEnum("action_draft_kind", [
+  "email_reply",
+  "post_meeting_email",
+  "calendar_invite",
+]);
+
+export const actionDraftStatus = pgEnum("action_draft_status", [
+  "draft",
+  "approved",
+  "sent",
+  "discarded",
+]);
+
 export const users = pgTable(
   "users",
   {
@@ -253,6 +266,41 @@ export const followUpItems = pgTable(
     workspaceTypeCalendarEventIdx: uniqueIndex(
       "follow_up_items_workspace_type_calendar_event_idx",
     ).on(table.workspaceId, table.type, table.sourceCalendarEventId),
+  }),
+);
+
+export const actionDrafts = pgTable(
+  "action_drafts",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    workspaceId: uuid("workspace_id")
+      .notNull()
+      .references(() => workspaces.id, { onDelete: "cascade" }),
+    followUpItemId: uuid("follow_up_item_id")
+      .notNull()
+      .references(() => followUpItems.id, { onDelete: "cascade" }),
+    kind: actionDraftKind("kind").notNull(),
+    status: actionDraftStatus("status").notNull().default("draft"),
+    recipient: text("recipient"),
+    subject: text("subject"),
+    body: text("body"),
+    scheduledFor: timestamp("scheduled_for", { withTimezone: true }),
+    payload: jsonb("payload").$type<Record<string, unknown>>(),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .defaultNow()
+      .notNull(),
+    updatedAt: timestamp("updated_at", { withTimezone: true })
+      .defaultNow()
+      .notNull(),
+  },
+  (table) => ({
+    workspaceStatusIdx: index("action_drafts_workspace_status_idx").on(
+      table.workspaceId,
+      table.status,
+    ),
+    followUpItemIdx: index("action_drafts_follow_up_item_idx").on(
+      table.followUpItemId,
+    ),
   }),
 );
 

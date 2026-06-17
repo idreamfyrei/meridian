@@ -43,6 +43,13 @@
       "when": 1781637799562,
       "tag": "0005_stiff_diamondback",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1781665088024,
+      "tag": "0006_talented_skin",
+      "breakpoints": true
     }
   ]
 }
