@@ -84,6 +84,35 @@ export async function listActionDraftsForFollowUp(
   });
 }
 
+export async function getActionDraft(
+  db: MeridianDb,
+  input: {
+    workspaceId: string;
+    id: string;
+  },
+) {
+  return db.query.actionDrafts.findFirst({
+    where: and(
+      eq(actionDrafts.workspaceId, input.workspaceId),
+      eq(actionDrafts.id, input.id),
+    ),
+  });
+}
+
+export async function markActionDraftSent(
+  db: MeridianDb,
+  input: {
+    workspaceId: string;
+    id: string;
+  },
+) {
+  return updateActionDraftStatus(db, {
+    workspaceId: input.workspaceId,
+    id: input.id,
+    status: "sent",
+  });
+}
+
 export async function updateActionDraftStatus(
   db: MeridianDb,
   input: UpdateActionDraftStatusInput,
