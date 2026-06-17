@@ -1,4 +1,4 @@
-import { and, asc, eq } from "drizzle-orm";
+import { and, asc, eq, lte, or } from "drizzle-orm";
 
 import type { MeridianDb } from "./index";
 import { followUpItems } from "./schema";
@@ -125,13 +125,23 @@ export async function listOpenFollowUpItems(
   limit = 20,
 ) {
   return db.query.followUpItems.findMany({
-    where: and(
-      eq(followUpItems.workspaceId, workspaceId),
-      eq(followUpItems.status, "open"),
-    ),
+    where: getVisibleFollowUpWhere(workspaceId, new Date()),
     orderBy: asc(followUpItems.createdAt),
     limit,
   });
+}
+
+function getVisibleFollowUpWhere(workspaceId: string, now: Date) {
+  return and(
+    eq(followUpItems.workspaceId, workspaceId),
+    or(
+      eq(followUpItems.status, "open"),
+      and(
+        eq(followUpItems.status, "snoozed"),
+        lte(followUpItems.snoozedUntil, now),
+      ),
+    ),
+  );
 }
 
 export async function updateFollowUpItemStatus(
