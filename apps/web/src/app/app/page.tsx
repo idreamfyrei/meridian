@@ -196,8 +196,12 @@ export default async function AppPage() {
                           {draft.status}
                         </span>
 
-                        {draft.status === "draft" ? (
-                          <ActionDraftActions id={draft.id} />
+                        {draft.status === "draft" ||
+                        draft.status === "approved" ? (
+                          <ActionDraftActions
+                            id={draft.id}
+                            status={draft.status}
+                          />
                         ) : null}
                       </div>
                     </div>
