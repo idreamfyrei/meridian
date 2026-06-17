@@ -3,7 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 
-type FollowUpActionStatus = "handled" | "dismissed";
+type FollowUpActionStatus = "handled" | "dismissed" | "snoozed";
 
 export function FollowUpActions({ id }: { id: string }) {
   const router = useRouter();
@@ -52,6 +52,15 @@ export function FollowUpActions({ id }: { id: string }) {
           className="rounded-md border border-zinc-200 bg-white px-2.5 py-1.5 text-xs font-medium text-zinc-700 shadow-sm transition hover:bg-zinc-50 disabled:cursor-not-allowed disabled:opacity-50"
         >
           {pendingStatus === "handled" ? "Saving..." : "Handled"}
+        </button>
+
+        <button
+          type="button"
+          onClick={() => updateStatus("snoozed")}
+          disabled={pendingStatus !== null}
+          className="rounded-md border border-zinc-200 bg-white px-2.5 py-1.5 text-xs font-medium text-zinc-500 shadow-sm transition hover:bg-zinc-50 disabled:cursor-not-allowed disabled:opacity-50"
+        >
+          {pendingStatus === "snoozed" ? "Saving..." : "Snooze"}
         </button>
 
         <button
