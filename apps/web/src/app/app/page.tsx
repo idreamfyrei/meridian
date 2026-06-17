@@ -5,10 +5,7 @@ import {
   listProjectedEmailThreads,
 } from "@meridian/db";
 
-import { SyncEmailButton } from "./sync-email-button";
 import { getCurrentWorkspace } from "@/lib/current-workspace";
-import { SyncCalendarButton } from "./sync-calendar-button";
-import { DetectLoopsButton } from "./detect-loops-button";
 import { FollowUpActions } from "./follow-up-actions";
 import { RefreshWorkspaceButton } from "./refresh-workspace-button";
 
@@ -125,8 +122,6 @@ export default async function AppPage() {
                 signals.
               </p>
             </div>
-
-            <DetectLoopsButton />
           </div>
 
           <div className="mt-3 overflow-hidden rounded-lg border border-zinc-200 bg-white shadow-sm">
@@ -160,7 +155,8 @@ export default async function AppPage() {
               </ul>
             ) : (
               <p className="px-4 py-3 text-sm text-zinc-500">
-                No open loops yet. Sync Gmail, then run loop detection.
+                No open loops yet. Refresh your workspace to check for new
+                follow-ups.
               </p>
             )}
           </div>
@@ -214,8 +210,6 @@ export default async function AppPage() {
                 Stored Google Calendar projections for this workspace.
               </p>
             </div>
-
-            <SyncCalendarButton />
           </div>
 
           <div className="mt-3 overflow-hidden rounded-lg border border-zinc-200 bg-white shadow-sm">
@@ -234,7 +228,7 @@ export default async function AppPage() {
               </ul>
             ) : (
               <p className="px-4 py-3 text-sm text-zinc-500">
-                No synced upcoming events yet. Run the calendar sync endpoint.
+                No upcoming events synced yet.
               </p>
             )}
           </div>
@@ -250,8 +244,6 @@ export default async function AppPage() {
                 Stored Gmail projections for this workspace.
               </p>
             </div>
-
-            <SyncEmailButton />
           </div>
 
           <div className="mt-3 overflow-hidden rounded-lg border border-zinc-200 bg-white shadow-sm">
@@ -273,7 +265,7 @@ export default async function AppPage() {
               </ul>
             ) : (
               <p className="px-4 py-3 text-sm text-zinc-500">
-                No synced inbox messages yet. Run the Gmail sync endpoint.
+                No recent inbox messages synced yet.
               </p>
             )}
           </div>
