@@ -9,6 +9,7 @@ import { SyncEmailButton } from "./sync-email-button";
 import { getCurrentWorkspace } from "@/lib/current-workspace";
 import { SyncCalendarButton } from "./sync-calendar-button";
 import { DetectLoopsButton } from "./detect-loops-button";
+import { FollowUpActions } from "./follow-up-actions";
 
 type CalendarEvent = {
   id: string;
@@ -143,9 +144,13 @@ export default async function AppPage() {
                         </p>
                       </div>
 
-                      <span className="w-fit rounded-full bg-zinc-100 px-2.5 py-1 text-xs font-medium text-zinc-600">
-                        {getFollowUpTypeLabel(item.type)}
-                      </span>
+                      <div className="flex flex-col items-start gap-2 sm:items-end">
+                        <span className="w-fit rounded-full bg-zinc-100 px-2.5 py-1 text-xs font-medium text-zinc-600">
+                          {getFollowUpTypeLabel(item.type)}
+                        </span>
+
+                        <FollowUpActions id={item.id} />
+                      </div>
                     </div>
                   </li>
                 ))}
