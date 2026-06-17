@@ -11,7 +11,7 @@ type FollowUpStatusRequest = {
 };
 
 function isAllowedStatus(value: unknown) {
-  return value === "handled" || value === "dismissed";
+  return value === "handled" || value === "dismissed" || value === "snoozed";
 }
 
 export async function POST(request: Request) {
@@ -38,11 +38,18 @@ export async function POST(request: Request) {
     );
   }
 
+  const snoozedUntil = body.status === "snoozed" ? new Date() : null;
+
+  if (snoozedUntil) {
+    snoozedUntil.setDate(snoozedUntil.getDate() + 1);
+  }
+
   try {
     const item = await updateFollowUpItemStatus(currentWorkspace.db, {
       workspaceId: currentWorkspace.workspace.id,
       id: body.id,
       status: body.status,
+      snoozedUntil,
     });
 
     logger.info(
