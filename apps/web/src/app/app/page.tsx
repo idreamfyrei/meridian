@@ -7,6 +7,7 @@ import {
 } from "@meridian/db";
 
 import { getCurrentWorkspace } from "@/lib/current-workspace";
+import { ActionDraftActions } from "./action-draft-actions";
 import { FollowUpActions } from "./follow-up-actions";
 import { RefreshWorkspaceButton } from "./refresh-workspace-button";
 
@@ -190,9 +191,15 @@ export default async function AppPage() {
                         </p>
                       </div>
 
-                      <span className="w-fit rounded-full bg-amber-50 px-2.5 py-1 text-xs font-medium text-amber-700">
-                        {draft.status}
-                      </span>
+                      <div className="flex flex-col items-start gap-2 sm:items-end">
+                        <span className="w-fit rounded-full bg-amber-50 px-2.5 py-1 text-xs font-medium text-amber-700">
+                          {draft.status}
+                        </span>
+
+                        {draft.status === "draft" ? (
+                          <ActionDraftActions id={draft.id} />
+                        ) : null}
+                      </div>
                     </div>
                   </li>
                 ))}
