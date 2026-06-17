@@ -85,3 +85,16 @@ export type {
   UpdateFollowUpItemStatusInput,
   UpsertFollowUpItemInput,
 } from "./follow-up-items";
+
+export {
+  createActionDraft,
+  listActionDraftsForFollowUp,
+  updateActionDraftStatus,
+} from "./action-drafts";
+
+export type {
+  ActionDraftKind,
+  ActionDraftStatus,
+  CreateActionDraftInput,
+  UpdateActionDraftStatusInput,
+} from "./action-drafts";
