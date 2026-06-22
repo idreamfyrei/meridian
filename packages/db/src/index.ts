@@ -89,6 +89,20 @@ export type {
 } from "./follow-up-items";
 
 export {
+  createWorkItem,
+  ensureBoardWorkItemsFromOpenFollowUps,
+  ensureDefaultBoard,
+  listBoardWorkItems,
+  updateWorkItemStatus,
+} from "./work-items";
+
+export type {
+  CreateWorkItemInput,
+  UpdateWorkItemStatusInput,
+  WorkItemStatus,
+} from "./work-items";
+
+export {
   createActionDraft,
   getActionDraft,
   listActionDrafts,

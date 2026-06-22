@@ -42,6 +42,14 @@ export const actionDraftStatus = pgEnum("action_draft_status", [
   "discarded",
 ]);
 
+export const workItemStatus = pgEnum("work_item_status", [
+  "triage",
+  "ready",
+  "in_progress",
+  "waiting",
+  "done",
+]);
+
 export const users = pgTable(
   "users",
   {
@@ -266,6 +274,66 @@ export const followUpItems = pgTable(
     workspaceTypeCalendarEventIdx: uniqueIndex(
       "follow_up_items_workspace_type_calendar_event_idx",
     ).on(table.workspaceId, table.type, table.sourceCalendarEventId),
+  }),
+);
+
+export const boards = pgTable(
+  "boards",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    workspaceId: uuid("workspace_id")
+      .notNull()
+      .references(() => workspaces.id, { onDelete: "cascade" }),
+    name: varchar("name", { length: 120 }).notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .defaultNow()
+      .notNull(),
+    updatedAt: timestamp("updated_at", { withTimezone: true })
+      .defaultNow()
+      .notNull(),
+  },
+  (table) => ({
+    workspaceIdx: uniqueIndex("boards_workspace_idx").on(table.workspaceId),
+  }),
+);
+
+export const workItems = pgTable(
+  "work_items",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    workspaceId: uuid("workspace_id")
+      .notNull()
+      .references(() => workspaces.id, { onDelete: "cascade" }),
+    boardId: uuid("board_id")
+      .notNull()
+      .references(() => boards.id, { onDelete: "cascade" }),
+    status: workItemStatus("status").notNull().default("triage"),
+    title: varchar("title", { length: 240 }).notNull(),
+    description: text("description"),
+    dueAt: timestamp("due_at", { withTimezone: true }),
+    sourceFollowUpItemId: uuid("source_follow_up_item_id").references(
+      () => followUpItems.id,
+      { onDelete: "set null" },
+    ),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .defaultNow()
+      .notNull(),
+    updatedAt: timestamp("updated_at", { withTimezone: true })
+      .defaultNow()
+      .notNull(),
+  },
+  (table) => ({
+    boardStatusIdx: index("work_items_board_status_idx").on(
+      table.boardId,
+      table.status,
+    ),
+    workspaceStatusIdx: index("work_items_workspace_status_idx").on(
+      table.workspaceId,
+      table.status,
+    ),
+    sourceFollowUpItemIdx: uniqueIndex(
+      "work_items_source_follow_up_item_idx",
+    ).on(table.boardId, table.sourceFollowUpItemId),
   }),
 );
 

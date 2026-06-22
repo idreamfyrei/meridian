@@ -1,15 +1,16 @@
 import {
+  ensureBoardWorkItemsFromOpenFollowUps,
+  ensureDefaultBoard,
   getIntegrationConnectionStatuses,
-  listActionDrafts,
-  listOpenFollowUpItems,
+  listBoardWorkItems,
   listProjectedCalendarEvents,
   listProjectedEmailThreads,
+  type WorkItemStatus,
 } from "@meridian/db";
 
 import { getCurrentWorkspace } from "@/lib/current-workspace";
-import { ActionDraftActions } from "./action-draft-actions";
-import { FollowUpActions } from "./follow-up-actions";
 import { RefreshWorkspaceButton } from "./refresh-workspace-button";
+import { WorkItemStatusActions } from "./work-item-status-actions";
 
 type CalendarEvent = {
   id: string;
@@ -27,26 +28,53 @@ type InboxThread = {
   lastMessageAt: Date | null;
 };
 
+type BoardWorkItem = {
+  id: string;
+  status: WorkItemStatus;
+  title: string;
+  description: string | null;
+  dueAt: Date | null;
+  sourceFollowUpItemId: string | null;
+};
+
+const BOARD_COLUMNS: Array<{
+  status: WorkItemStatus;
+  label: string;
+  description: string;
+}> = [
+  {
+    status: "triage",
+    label: "Triage",
+    description: "Needs owner review before it becomes planned work.",
+  },
+  {
+    status: "ready",
+    label: "Ready",
+    description: "Clear enough to pick up next.",
+  },
+  {
+    status: "in_progress",
+    label: "In Progress",
+    description: "Currently being handled.",
+  },
+  {
+    status: "waiting",
+    label: "Waiting",
+    description: "Blocked on a reply, decision, or outside input.",
+  },
+  {
+    status: "done",
+    label: "Done",
+    description: "Completed or no longer needs action.",
+  },
+];
+
 function getProviderLabel(provider: "gmail" | "google_calendar") {
   if (provider === "gmail") {
     return "Gmail";
   }
 
   return "Google Calendar";
-}
-
-function getFollowUpTypeLabel(
-  type: "reply_needed" | "scheduling_needed" | "post_meeting_follow_up",
-) {
-  if (type === "reply_needed") {
-    return "Reply needed";
-  }
-
-  if (type === "scheduling_needed") {
-    return "Scheduling needed";
-  }
-
-  return "Post-meeting follow-up";
 }
 
 function getEventStartLabel(event: CalendarEvent) {
@@ -60,6 +88,30 @@ function getEventStartLabel(event: CalendarEvent) {
   }).format(event.startsAt);
 }
 
+function getDueLabel(dueAt: Date | null) {
+  if (!dueAt) {
+    return null;
+  }
+
+  return new Intl.DateTimeFormat("en", {
+    dateStyle: "medium",
+  }).format(dueAt);
+}
+
+function groupWorkItemsByStatus(items: BoardWorkItem[]) {
+  const grouped = new Map<WorkItemStatus, BoardWorkItem[]>();
+
+  for (const column of BOARD_COLUMNS) {
+    grouped.set(column.status, []);
+  }
+
+  for (const item of items) {
+    grouped.get(item.status)?.push(item);
+  }
+
+  return grouped;
+}
+
 export default async function AppPage() {
   const currentWorkspace = await getCurrentWorkspace();
 
@@ -68,17 +120,26 @@ export default async function AppPage() {
   }
 
   const { db, workspace } = currentWorkspace;
+  const board = await ensureDefaultBoard(db, {
+    workspaceId: workspace.id,
+    name: `${workspace.name} Board`,
+  });
+
+  await ensureBoardWorkItemsFromOpenFollowUps(db, {
+    workspaceId: workspace.id,
+    boardId: board.id,
+  });
 
   const integrationStatuses = await getIntegrationConnectionStatuses(
     db,
     workspace.id,
   );
 
-  const followUpItems = await listOpenFollowUpItems(db, workspace.id, 10);
-  const actionDrafts = await listActionDrafts(db, {
+  const workItems = await listBoardWorkItems(db, {
     workspaceId: workspace.id,
-    limit: 5,
+    boardId: board.id,
   });
+  const groupedWorkItems = groupWorkItemsByStatus(workItems);
 
   const now = new Date();
   const sevenDaysFromNow = new Date(now);
@@ -99,18 +160,18 @@ export default async function AppPage() {
 
   return (
     <main className="flex flex-1 bg-zinc-50 px-6 py-8">
-      <section className="w-full max-w-5xl">
+      <section className="w-full max-w-7xl">
         <p className="text-sm font-medium text-zinc-500">{workspace.name}</p>
 
-        <div className="mt-2 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+        <div className="mt-2 flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
           <div>
             <h1 className="text-3xl font-semibold tracking-tight text-zinc-950">
-              Action Queue
+              Work Board
             </h1>
             <p className="mt-4 max-w-2xl text-base leading-7 text-zinc-600">
-              This route is connected to your Meridian workspace. Next, we will
-              use this workspace as the tenant boundary for Gmail and Google
-              Calendar.
+              A shared execution surface for actionable work from your Meridian
+              workspace. Open loops start in Triage so you can decide what moves
+              forward.
             </p>
           </div>
 
@@ -118,106 +179,104 @@ export default async function AppPage() {
         </div>
 
         <section className="mt-8">
-          <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
             <div>
               <h2 className="text-sm font-semibold text-zinc-950">
-                Open loops
+                {board.name}
               </h2>
               <p className="mt-1 text-sm text-zinc-500">
-                Actionable follow-ups detected from your synced workspace
-                signals.
+                Five-column workflow for triage, planning, active work, waiting,
+                and completion.
               </p>
             </div>
-          </div>
-
-          <div className="mt-3 overflow-hidden rounded-lg border border-zinc-200 bg-white shadow-sm">
-            {followUpItems.length ? (
-              <ul className="divide-y divide-zinc-100">
-                {followUpItems.map((item) => (
-                  <li key={item.id} className="px-4 py-3">
-                    <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
-                      <div className="min-w-0">
-                        <p className="truncate text-sm font-medium text-zinc-950">
-                          {item.title}
-                        </p>
-                        <p className="mt-1 line-clamp-2 text-sm text-zinc-600">
-                          {item.reason ?? "No reason captured yet."}
-                        </p>
-                        <p className="mt-1 text-xs text-zinc-400">
-                          {item.suggestedAction ?? "Review this loop."}
-                        </p>
-                      </div>
-
-                      <div className="flex flex-col items-start gap-2 sm:items-end">
-                        <span className="w-fit rounded-full bg-zinc-100 px-2.5 py-1 text-xs font-medium text-zinc-600">
-                          {getFollowUpTypeLabel(item.type)}
-                        </span>
-
-                        <FollowUpActions id={item.id} />
-                      </div>
-                    </div>
-                  </li>
-                ))}
-              </ul>
-            ) : (
-              <p className="px-4 py-3 text-sm text-zinc-500">
-                No open loops yet. Refresh your workspace to check for new
-                follow-ups.
-              </p>
-            )}
-          </div>
-        </section>
-
-        <section className="mt-8">
-          <div>
-            <h2 className="text-sm font-semibold text-zinc-950">Drafts</h2>
-            <p className="mt-1 text-sm text-zinc-500">
-              Proposed actions waiting for review before anything is sent.
+            <p className="text-sm text-zinc-500">
+              {workItems.length} {workItems.length === 1 ? "item" : "items"}
             </p>
           </div>
 
-          <div className="mt-3 overflow-hidden rounded-lg border border-zinc-200 bg-white shadow-sm">
-            {actionDrafts.length ? (
-              <ul className="divide-y divide-zinc-100">
-                {actionDrafts.map((draft) => (
-                  <li key={draft.id} className="px-4 py-3">
-                    <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-                      <div className="min-w-0">
-                        <p className="truncate text-sm font-medium text-zinc-950">
-                          {draft.subject ?? "Untitled draft"}
-                        </p>
-                        <p className="mt-1 truncate text-xs text-zinc-400">
-                          {draft.recipient
-                            ? `To: ${draft.recipient}`
-                            : "No recipient yet"}
-                        </p>
-                        <p className="mt-1 line-clamp-2 whitespace-pre-line text-sm text-zinc-600">
-                          {draft.body ?? "No draft body yet."}
-                        </p>
-                      </div>
+          <div className="mt-4 grid gap-4 overflow-x-auto pb-3 lg:grid-cols-5">
+            {BOARD_COLUMNS.map((column) => {
+              const columnItems = groupedWorkItems.get(column.status) ?? [];
 
-                      <div className="flex flex-col items-start gap-2 sm:items-end">
-                        <span className="w-fit rounded-full bg-amber-50 px-2.5 py-1 text-xs font-medium text-amber-700">
-                          {draft.status}
-                        </span>
-
-                        {draft.status === "draft" ||
-                        draft.status === "approved" ? (
-                          <ActionDraftActions
-                            id={draft.id}
-                            status={draft.status}
-                          />
-                        ) : null}
-                      </div>
+              return (
+                <section
+                  key={column.status}
+                  className="min-w-72 rounded-lg border border-zinc-200 bg-zinc-100/70"
+                >
+                  <div className="border-b border-zinc-200 px-3 py-3">
+                    <div className="flex items-center justify-between gap-3">
+                      <h3 className="text-sm font-semibold text-zinc-950">
+                        {column.label}
+                      </h3>
+                      <span className="rounded-full bg-white px-2 py-0.5 text-xs font-medium text-zinc-500">
+                        {columnItems.length}
+                      </span>
                     </div>
-                  </li>
-                ))}
-              </ul>
-            ) : (
-              <p className="px-4 py-3 text-sm text-zinc-500">
-                No drafts yet. Create one from an open loop.
-              </p>
-            )}
+                    <p className="mt-1 min-h-10 text-xs leading-5 text-zinc-500">
+                      {column.description}
+                    </p>
+                  </div>
+
+                  <div className="flex min-h-64 flex-col gap-3 p-3">
+                    {columnItems.length ? (
+                      columnItems.map((item) => {
+                        const dueLabel = getDueLabel(item.dueAt);
+
+                        return (
+                          <article
+                            key={item.id}
+                            className="rounded-lg border border-zinc-200 bg-white p-3 shadow-sm"
+                          >
+                            <div className="space-y-2">
+                              <p className="text-sm font-medium leading-5 text-zinc-950">
+                                {item.title}
+                              </p>
+
+                              {item.description ? (
+                                <p className="line-clamp-3 whitespace-pre-line text-sm leading-6 text-zinc-600">
+                                  {item.description}
+                                </p>
+                              ) : (
+                                <p className="text-sm text-zinc-400">
+                                  No brief captured yet.
+                                </p>
+                              )}
+
+                              <div className="flex flex-wrap gap-2">
+                                {dueLabel ? (
+                                  <span className="rounded-full bg-zinc-100 px-2 py-0.5 text-xs font-medium text-zinc-500">
+                                    Due {dueLabel}
+                                  </span>
+                                ) : null}
+
+                                {item.sourceFollowUpItemId ? (
+                                  <span className="rounded-full bg-sky-50 px-2 py-0.5 text-xs font-medium text-sky-700">
+                                    From open loop
+                                  </span>
+                                ) : null}
+                              </div>
+                            </div>
+
+                            <div className="mt-3 border-t border-zinc-100 pt-3">
+                              <WorkItemStatusActions
+                                id={item.id}
+                                status={item.status}
+                              />
+                            </div>
+                          </article>
+                        );
+                      })
+                    ) : (
+                      <div className="flex min-h-28 items-center rounded-lg border border-dashed border-zinc-300 bg-white/70 px-3 py-4">
+                        <p className="text-sm text-zinc-500">
+                          No work items here yet.
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                </section>
+              );
+            })}
           </div>
         </section>
 
@@ -259,8 +318,8 @@ export default async function AppPage() {
           </div>
         </section>
 
-        <section className="mt-8">
-          <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+        <section className="mt-8 grid gap-6 lg:grid-cols-2">
+          <div>
             <div>
               <h2 className="text-sm font-semibold text-zinc-950">
                 Upcoming calendar
@@ -269,32 +328,30 @@ export default async function AppPage() {
                 Stored Google Calendar projections for this workspace.
               </p>
             </div>
+
+            <div className="mt-3 overflow-hidden rounded-lg border border-zinc-200 bg-white shadow-sm">
+              {agendaItems.length ? (
+                <ul className="divide-y divide-zinc-100">
+                  {agendaItems.map((event) => (
+                    <li key={event.id} className="px-4 py-3">
+                      <p className="text-sm font-medium text-zinc-950">
+                        {event.summary ?? "Untitled event"}
+                      </p>
+                      <p className="mt-1 text-sm text-zinc-500">
+                        {getEventStartLabel(event)}
+                      </p>
+                    </li>
+                  ))}
+                </ul>
+              ) : (
+                <p className="px-4 py-3 text-sm text-zinc-500">
+                  No upcoming events synced yet.
+                </p>
+              )}
+            </div>
           </div>
 
-          <div className="mt-3 overflow-hidden rounded-lg border border-zinc-200 bg-white shadow-sm">
-            {agendaItems.length ? (
-              <ul className="divide-y divide-zinc-100">
-                {agendaItems.map((event) => (
-                  <li key={event.id} className="px-4 py-3">
-                    <p className="text-sm font-medium text-zinc-950">
-                      {event.summary ?? "Untitled event"}
-                    </p>
-                    <p className="mt-1 text-sm text-zinc-500">
-                      {getEventStartLabel(event)}
-                    </p>
-                  </li>
-                ))}
-              </ul>
-            ) : (
-              <p className="px-4 py-3 text-sm text-zinc-500">
-                No upcoming events synced yet.
-              </p>
-            )}
-          </div>
-        </section>
-
-        <section className="mt-8">
-          <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+          <div>
             <div>
               <h2 className="text-sm font-semibold text-zinc-950">
                 Recent inbox
@@ -303,30 +360,30 @@ export default async function AppPage() {
                 Stored Gmail projections for this workspace.
               </p>
             </div>
-          </div>
 
-          <div className="mt-3 overflow-hidden rounded-lg border border-zinc-200 bg-white shadow-sm">
-            {inboxThreads.length ? (
-              <ul className="divide-y divide-zinc-100">
-                {inboxThreads.map((thread) => (
-                  <li key={thread.id} className="px-4 py-3">
-                    <p className="truncate text-sm font-medium text-zinc-950">
-                      {thread.subject ?? "No subject"}
-                    </p>
-                    <p className="mt-1 line-clamp-2 text-sm text-zinc-700">
-                      {thread.snippet ?? "No preview available"}
-                    </p>
-                    <p className="mt-1 truncate text-xs text-zinc-400">
-                      {thread.from ?? "Unknown sender"}
-                    </p>
-                  </li>
-                ))}
-              </ul>
-            ) : (
-              <p className="px-4 py-3 text-sm text-zinc-500">
-                No recent inbox messages synced yet.
-              </p>
-            )}
+            <div className="mt-3 overflow-hidden rounded-lg border border-zinc-200 bg-white shadow-sm">
+              {inboxThreads.length ? (
+                <ul className="divide-y divide-zinc-100">
+                  {inboxThreads.map((thread) => (
+                    <li key={thread.id} className="px-4 py-3">
+                      <p className="truncate text-sm font-medium text-zinc-950">
+                        {thread.subject ?? "No subject"}
+                      </p>
+                      <p className="mt-1 line-clamp-2 text-sm text-zinc-700">
+                        {thread.snippet ?? "No preview available"}
+                      </p>
+                      <p className="mt-1 truncate text-xs text-zinc-400">
+                        {thread.from ?? "Unknown sender"}
+                      </p>
+                    </li>
+                  ))}
+                </ul>
+              ) : (
+                <p className="px-4 py-3 text-sm text-zinc-500">
+                  No recent inbox messages synced yet.
+                </p>
+              )}
+            </div>
           </div>
         </section>
       </section>

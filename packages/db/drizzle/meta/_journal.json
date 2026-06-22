@@ -50,6 +50,13 @@
       "when": 1781665088024,
       "tag": "0006_talented_skin",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1782034386003,
+      "tag": "0007_narrow_dreaming_celestial",
+      "breakpoints": true
     }
   ]
 }
